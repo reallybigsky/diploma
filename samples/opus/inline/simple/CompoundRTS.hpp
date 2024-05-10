@@ -14,7 +14,7 @@ namespace opus::inl::simple {
 template <bool BOXED>
 class CompoundRTS_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("CompoundRTS");
+    static constexpr Magic MAGIC = 3824220113;
     static constexpr bool STATIC = false;
 
     CompoundRTS_BASE() noexcept = default;

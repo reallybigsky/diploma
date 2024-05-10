@@ -1,7 +1,8 @@
 #pragma once
 
-#include "baseline/Includes.hpp"
-#include "baseline/statshouse/Dictionary.hpp"
+#include "prelude/baseline/Includes.hpp"
+
+#include "samples/baseline/statshouse/Dictionary.hpp"
 
 
 
@@ -9,9 +10,7 @@ namespace baseline::statshouse {
 
 class HttpQuery {
 public:
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
     static constexpr Magic MAGIC = 263205420;
-    static constexpr bool CTS = false;
 
     HttpQuery() noexcept = default;
 
@@ -22,66 +21,71 @@ public:
 
     ~HttpQuery() noexcept = default;
 
-    HttpQuery(Nat fields_mask,
-              const string& uri,
-              const Dictionary<string>& args,
-              const Dictionary<string>& headers) noexcept
-        : m_fields_mask(fields_mask)
-        , m_uri(uri)
-        , m_args(args)
-        , m_headers(headers)
-    {}
-
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
 
-    const string& get_uri() const noexcept
+    const std::optional<string>& get_uri() const noexcept
     {
         return m_uri;
     }
 
-    const Dictionary<string>& get_args() const noexcept
+    const std::optional<dictionary<string>>& get_args() const noexcept
     {
         return m_args;
     }
 
-    const Dictionary<string>& get_headers() const noexcept
+    const std::optional<dictionary<string>>& get_headers() const noexcept
     {
         return m_headers;
     }
 
     static HttpQuery fetch(InputStream& stream)
     {
-        Magic magic = Magic::fetch(stream);
-        if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
-
         Nat fields_mask = Nat::fetch(stream);
-        string uri;
+        std::optional<string> uri;
         if (IS_SET(fields_mask, 0)) uri = string::fetch(stream);
-        Dictionary<string> args;
-        if (IS_SET(fields_mask, 1)) args = Dictionary<string>::fetch(stream);
-        Dictionary<string> headers;
-        if (IS_SET(fields_mask, 2)) headers = Dictionary<string>::fetch(stream);
-        return {fields_mask,
-                uri,
-                args,
-                headers};
+        std::optional<dictionary<string>> args;
+        if (IS_SET(fields_mask, 1)) args = dictionary<string>::fetch(stream);
+        std::optional<dictionary<string>> headers;
+        if (IS_SET(fields_mask, 2)) headers = dictionary<string>::fetch(stream);
+        HttpQuery result(std::move(fields_mask),
+                         std::move(uri),
+                         std::move(args),
+                         std::move(headers));
+        return result;
     }
 
     void store(OutputStream& stream) const
     {
-        MAGIC.store(stream);
         m_fields_mask.store(stream);
-        if (IS_SET(m_fields_mask, 0)) m_uri.store(stream);
-        if (IS_SET(m_fields_mask, 1)) m_args.store(stream);
-        if (IS_SET(m_fields_mask, 2)) m_headers.store(stream);
+        if (IS_SET(get_fields_mask(), 0)) m_uri->store(stream);
+        if (IS_SET(get_fields_mask(), 1)) m_args->store(stream);
+        if (IS_SET(get_fields_mask(), 2)) m_headers->store(stream);
     }
 
     class Builder {
     public:
-        Builder& set_fields_mask(Nat::Builder value) noexcept
+        friend bool operator==(const Builder& lhs, const HttpQuery& rhs) noexcept
+        {
+            return lhs.b_fields_mask == rhs.get_fields_mask()
+                   && (!rhs.get_uri() || lhs.b_uri == rhs.get_uri())
+                   && (!rhs.get_args() || lhs.b_args == rhs.get_args())
+                   && (!rhs.get_headers() || lhs.b_headers == rhs.get_headers());
+        }
+
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7>
+        static Builder random(std::default_random_engine& engine) noexcept
+        {
+            return Builder {}
+                    .set_fields_mask(utils::random_mask<0, 7>(engine))
+                    .set_uri(string::Builder::random<SIZE_1>(engine))
+                    .set_args(dictionary<string>::Builder::random<SIZE_2, SIZE_3, SIZE_4>(engine))
+                    .set_headers(dictionary<string>::Builder::random<SIZE_5, SIZE_6, SIZE_7>(engine));
+        }
+
+        Builder& set_fields_mask(const Nat::Builder& value) noexcept
         {
             b_fields_mask = value;
             return *this;
@@ -93,13 +97,13 @@ public:
             return *this;
         }
 
-        Builder& set_args(const Dictionary<string>::Builder& value) noexcept
+        Builder& set_args(const dictionary<string>::Builder& value) noexcept
         {
             b_args = value;
             return *this;
         }
 
-        Builder& set_headers(const Dictionary<string>::Builder& value) noexcept
+        Builder& set_headers(const dictionary<string>::Builder& value) noexcept
         {
             b_headers = value;
             return *this;
@@ -117,15 +121,33 @@ public:
     private:
         Nat::Builder b_fields_mask;
         string::Builder b_uri;
-        Dictionary<string>::Builder b_args;
-        Dictionary<string>::Builder b_headers;
+        dictionary<string>::Builder b_args;
+        dictionary<string>::Builder b_headers;
     };
 
 private:
+    HttpQuery(Nat&& fields_mask,
+              std::optional<string>&& uri,
+              std::optional<dictionary<string>>&& args,
+              std::optional<dictionary<string>>&& headers) noexcept
+        : m_fields_mask(std::move(fields_mask))
+        , m_uri(std::move(uri))
+        , m_args(std::move(args))
+        , m_headers(std::move(headers))
+    {}
+
     Nat m_fields_mask;
-    string m_uri;
-    Dictionary<string> m_args;
-    Dictionary<string> m_headers;
+    std::optional<string> m_uri;
+    std::optional<dictionary<string>> m_args;
+    std::optional<dictionary<string>> m_headers;
 };
+
+bool operator==(const HttpQuery& lhs, const HttpQuery& rhs) noexcept
+{
+    return lhs.get_fields_mask() == rhs.get_fields_mask()
+           && lhs.get_uri() == rhs.get_uri()
+           && lhs.get_args() == rhs.get_args()
+           && lhs.get_headers() == rhs.get_headers();
+}
 
 }    // namespace baseline::statshouse

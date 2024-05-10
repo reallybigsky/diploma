@@ -32,7 +32,7 @@ public:
 
     static Proxy create(size_t size) noexcept
     {
-        uint8_t* buf = static_cast<uint8_t*>(alloc::allocate(sizeof(ref_cnt_t) + size));
+        uint8_t* buf = static_cast<uint8_t*>(Allocator::allocate(sizeof(ref_cnt_t) + size));
         ref_cnt_t* ref_cnt = (ref_cnt_t*)buf;
         *ref_cnt = 1;
         return Proxy {ref_cnt, buf + sizeof(ref_cnt_t)};
@@ -139,7 +139,7 @@ private:
     void clear() noexcept
     {
         if (m_ref_cnt && --(*m_ref_cnt) == 0) {
-            alloc::deallocate(m_ref_cnt);
+            Allocator::deallocate(m_ref_cnt);
         }
 
         m_ref_cnt = nullptr;
@@ -174,7 +174,7 @@ private:
         static Table<U>* create(size_t size) noexcept
         requires(StaticType<U>)
         {
-            Table<U>* proxy = static_cast<Table<U>*>(alloc::allocate(sizeof(Table<U>) + 2 * sizeof(uintptr_t) * size));
+            Table<U>* proxy = static_cast<Table<U>*>(Allocator::allocate(sizeof(Table<U>) + 2 * sizeof(uintptr_t) * size));
             proxy->p_ref_cnt = 1;
             proxy->p_size = size;
             return proxy;
@@ -183,7 +183,7 @@ private:
         static Table<U>* create(size_t size) noexcept
         requires(DynamicType<U>)
         {
-            Table<U>* proxy = static_cast<Table<U>*>(alloc::allocate(sizeof(Table<U>) + sizeof(U) * size));
+            Table<U>* proxy = static_cast<Table<U>*>(Allocator::allocate(sizeof(Table<U>) + sizeof(U) * size));
             proxy->p_ref_cnt = 1;
             proxy->p_size = size;
             return proxy;
@@ -200,7 +200,7 @@ private:
                 if (p_data[i] == 1 && IS_SHARED(p_data[i + 1])) {
                     U* u = (U*)GET_PTR(p_data[i + 1]);
                     std::destroy_at(u);
-                    alloc::deallocate(u);
+                    Allocator::deallocate(u);
                 }
             }
         }
@@ -317,7 +317,7 @@ private:
     {
         if (m_data && --m_data->p_ref_cnt == 0) {
             std::destroy_at(m_data);
-            alloc::deallocate(m_data);
+            Allocator::deallocate(m_data);
         }
 
         m_data = nullptr;

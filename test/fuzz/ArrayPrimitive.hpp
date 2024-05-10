@@ -8,14 +8,12 @@
 
 namespace fuzz_details {
 
-constexpr size_t ARRAY_PRIMITIVE_MAX_SIZE = 1024;
-
 template <::Primitive T>
 struct ArrayPrimitive {
     template <bool BOXED>
     auto toBuilder() const noexcept
     {
-        return typename ::ArrayBase<::Scalar<T>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, ::Scalar<T>>::Builder {}
                 .setArray(arr);
     }
 
@@ -26,9 +24,9 @@ template <::Primitive T>
 auto domainArrayPrimitive()
 {
     if constexpr (std::is_integral_v<T>) {
-        return fuzztest::StructOf<ArrayPrimitive<T>>(fuzztest::Arbitrary<std::vector<T>>().WithMaxSize(ARRAY_PRIMITIVE_MAX_SIZE));
+        return fuzztest::StructOf<ArrayPrimitive<T>>(fuzztest::Arbitrary<std::vector<T>>().WithMaxSize(1024));
     } else {
-        return fuzztest::StructOf<ArrayPrimitive<T>>(fuzztest::VectorOf(fuzztest::Finite<T>()).WithMaxSize(ARRAY_PRIMITIVE_MAX_SIZE));
+        return fuzztest::StructOf<ArrayPrimitive<T>>(fuzztest::VectorOf(fuzztest::Finite<T>()).WithMaxSize(1024));
     }
 }
 
@@ -38,11 +36,11 @@ struct ArrayArrayPrimitive {
     template <bool BOXED>
     auto toBuilder() const noexcept
     {
-        std::vector<typename ::ArrayBase<Scalar<T>, INNER_BOXED>::Builder> tmp;
+        std::vector<typename ::ArrayBase<INNER_BOXED, Scalar<T>>::Builder> tmp;
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<::ArrayBase<Scalar<T>, INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, ::ArrayBase<INNER_BOXED, Scalar<T>>>::Builder {}
                 .setArray(tmp);
     }
 

@@ -2,6 +2,7 @@
 
 #include "prelude/Common.hpp"
 #include "prelude/DataStream.hpp"
+#include "prelude/opus/Allocator.hpp"
 #include "prelude/opus/Proxy.hpp"
 
 #include <cstring>
@@ -143,7 +144,7 @@ public:
                 continue;
             }
 
-            T* arena = (T*)alloc::allocate(sizeof(T));
+            T* arena = (T*)Allocator::allocate(sizeof(T));
             T* t_proxy = std::construct_at(arena, T::fetch(*this));
 
             proxy[2 * i] = 1;

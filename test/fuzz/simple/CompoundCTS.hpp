@@ -45,7 +45,7 @@ struct ArrayCompoundCTS {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::CompoundCTS_BASE<INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::CompoundCTS_BASE<INNER_BOXED>>::Builder {}
                 .setArray(tmp);
     }
 

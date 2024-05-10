@@ -1,153 +1,107 @@
 #pragma once
 
-#include "Common.hpp"
-#include "baseline/Array.hpp"
+#include "prelude/baseline/Includes.hpp"
+
+#include "samples/baseline/statshouse/DictionaryField.hpp"
 
 
 
 namespace baseline::statshouse {
 
-template <TLType T>
-class DictionaryField {
+template <bool BOXED, TLType T>
+class Dictionary_BASE {
 public:
-    using TYPE_PARAM = T;
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
-    static constexpr bool CTS = false;
+    static constexpr Magic MAGIC = utils::commutative(2898633699, T::MAGIC);
+    static constexpr bool STATIC = false;
 
-    DictionaryField() noexcept = default;
+    Dictionary_BASE() noexcept = default;
 
-    DictionaryField(const DictionaryField&) noexcept = default;
-    DictionaryField(DictionaryField&&) noexcept = default;
-    DictionaryField& operator=(const DictionaryField&) noexcept = default;
-    DictionaryField& operator=(DictionaryField&&) noexcept = default;
+    Dictionary_BASE(const Dictionary_BASE&) noexcept = default;
+    Dictionary_BASE(Dictionary_BASE&&) noexcept = default;
+    Dictionary_BASE& operator=(const Dictionary_BASE&) noexcept = default;
+    Dictionary_BASE& operator=(Dictionary_BASE&&) noexcept = default;
 
-    ~DictionaryField() noexcept = default;
+    ~Dictionary_BASE() noexcept = default;
 
-    DictionaryField(const string& key,
-                    const T& value) noexcept
-        : m_key(key)
-        , m_value(value)
-    {}
-
-    const string& get_key() const noexcept
+    const array<dictionaryField<T>>& get_array1() const noexcept
     {
-        return m_key;
+        return m_array1;
     }
 
-    const T& get_value() const noexcept
+    template <typename... ARGS>
+    static Dictionary_BASE fetch(InputStream& stream, ARGS&&... args)
     {
-        return m_value;
+        if constexpr (BOXED) {
+            Magic magic = Magic::fetch(stream);
+            if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
+        }
+        array<dictionaryField<T>> array1 = array<dictionaryField<T>>::fetch(stream, std::forward<ARGS>(args)...);
+        Dictionary_BASE result {std::move(array1)};
+        return result;
     }
 
-    static DictionaryField fetch(InputStream& stream)
+    template <typename... ARGS>
+    void store(OutputStream& stream, ARGS&&... args) const
     {
-        string key = string::fetch(stream);
-        T value = T::fetch(stream);
-        return {key,
-                value};
-    }
-
-    void store(OutputStream& stream) const
-    {
-        m_key.store(stream);
-        m_value.store(stream);
+        if constexpr (BOXED) {
+            MAGIC.store(stream);
+        }
+        m_array1.store(stream, std::forward<ARGS>(args)...);
     }
 
     class Builder {
     public:
-        friend bool operator==(const Builder& lhs, const DictionaryField<T>& rhs)
+        using TYPE = Dictionary_BASE;
+
+        template <bool RHS_BOXED>
+        friend bool operator==(const Builder& lhs, const Dictionary_BASE<RHS_BOXED, T>& rhs) noexcept
         {
-            return lhs.b_key == rhs.get_key()
-                   && lhs.b_value == rhs.get_value();
+            return lhs.b_array1 == rhs.get_array1();
         }
 
-        Builder& set_key(const string::Builder& value) noexcept
+        template <size_t... SIZES>
+        static Builder random(std::default_random_engine& engine) noexcept
         {
-            b_key = value;
+            return Builder {}
+                    .set_array1(array<dictionaryField<T>>::Builder::template random<SIZES...>(engine));
+        }
+
+        Builder& set_array1(const array<dictionaryField<T>>::Builder& value) noexcept
+        {
+            b_array1 = value;
             return *this;
         }
 
-        Builder& set_value(const T::Builder& value) noexcept
+        template <typename... ARGS>
+        void store(OutputStream& stream, ARGS&&... args) const
         {
-            b_value = value;
-            return *this;
-        }
-
-        void store(OutputStream& stream) const
-        {
-            b_key.store(stream);
-            b_value.store(stream);
+            if constexpr (BOXED) {
+                MAGIC.store(stream);
+            }
+            b_array1.store(stream, std::forward<ARGS>(args)...);
         }
 
     private:
-        string::Builder b_key;
-        T::Builder b_value;
+        array<dictionaryField<T>>::Builder b_array1;
     };
 
 private:
-    string m_key;
-    T m_value;
+    Dictionary_BASE(array<dictionaryField<T>>&& array1) noexcept
+        : m_array1(std::move(array1))
+    {}
+
+    array<dictionaryField<T>> m_array1;
 };
 
 template <TLType T>
-class Dictionary {
-public:
-    using TYPE_PARAM = T;
-    static constexpr bool CTS = false;
+using dictionary = Dictionary_BASE<false, T>;
+template <TLType T>
+using Dictionary = Dictionary_BASE<true, T>;
 
-    Dictionary() noexcept = default;
+template <bool LHS_BOXED, bool RHS_BOXED, TLType T>
+bool operator==(const Dictionary_BASE<LHS_BOXED, T>& lhs, const Dictionary_BASE<RHS_BOXED, T>& rhs) noexcept
+{
+    return lhs.get_array1() == rhs.get_array1();
+}
 
-    Dictionary(const Dictionary&) noexcept = default;
-    Dictionary(Dictionary&&) noexcept = default;
-    Dictionary& operator=(const Dictionary&) noexcept = default;
-    Dictionary& operator=(Dictionary&&) noexcept = default;
-
-    ~Dictionary() noexcept = default;
-
-    Dictionary(const array<DictionaryField<T>>& data) noexcept
-        : m_data(data)
-    {}
-
-    const array<DictionaryField<T>>& get_data() const noexcept
-    {
-        return m_data;
-    }
-
-    static Dictionary fetch(InputStream& stream)
-    {
-        array<DictionaryField<T>> data = array<DictionaryField<T>>::fetch(stream);
-        return {data};
-    }
-
-    void store(OutputStream& stream) const
-    {
-        m_data.store(stream);
-    }
-
-    class Builder {
-    public:
-        friend bool operator==(const Builder& lhs, const Dictionary<T>& rhs)
-        {
-            return lhs.b_data == rhs.get_data();
-        }
-
-        Builder& set_data(const array<DictionaryField<T>>::Builder& value) noexcept
-        {
-            b_data = value;
-            return *this;
-        }
-
-        void store(OutputStream& stream) const
-        {
-            b_data.store(stream);
-        }
-
-    private:
-        array<DictionaryField<T>>::Builder b_data;
-    };
-
-private:
-    array<DictionaryField<T>> m_data;
-};
-
-}    // namespace baseline
+}    // namespace baseline::statshouse

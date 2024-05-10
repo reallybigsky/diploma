@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utils/crc.hpp"
-
 #include "prelude/Common.hpp"
 #include "prelude/baseline/InputStream.hpp"
 #include "prelude/baseline/OutputStream.hpp"
@@ -33,13 +31,13 @@ private:
     static constexpr magic_t get_type_hash() noexcept
     {
         if constexpr (std::is_same_v<int, U>) {
-            return COMPILE_TIME_CRC32_STR("Int");
+            return 2564215553;
         } else if constexpr (std::is_same_v<long, U>) {
-            return COMPILE_TIME_CRC32_STR("Long");
+            return 912690258;
         } else if constexpr (std::is_same_v<float, U>) {
-            return COMPILE_TIME_CRC32_STR("Float");
+            return 1489895022;
         } else {
-            return COMPILE_TIME_CRC32_STR("Double");
+            return 1379026465;
         }
     }
 

@@ -11,6 +11,7 @@
 namespace fuzz_details {
 
 struct Rectangle {
+    static constexpr Nat MIN_MASK_VALUE = 0;
     static constexpr Nat MAX_MASK_VALUE = 7;
 
     template <bool BOXED>
@@ -35,6 +36,7 @@ auto domainRectangle()
 
 template <bool INNER_BOXED>
 struct ArrayRectangle {
+    static constexpr Nat MIN_MASK_VALUE = 0;
     static constexpr Nat MAX_MASK_VALUE = 7;
 
     template <bool BOXED>
@@ -44,7 +46,7 @@ struct ArrayRectangle {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::Rectangle_BASE<INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::Rectangle_BASE<INNER_BOXED>>::Builder {}
                 .setArray(tmp);
     }
 
@@ -93,7 +95,7 @@ struct ArrayRectangle_s {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::Rectangle_BASE<INNER_BOXED, MASK>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::Rectangle_BASE<INNER_BOXED, MASK>>::Builder {}
                 .setArray(tmp);
     }
 

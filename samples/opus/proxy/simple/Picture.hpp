@@ -11,7 +11,7 @@ namespace opus::proxy::simple {
 template <bool BOXED>
 class Picture_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Picture");
+    static constexpr Magic MAGIC = 3553825019;
     static constexpr bool STATIC = false;
 
     Picture_BASE() noexcept = default;
@@ -31,7 +31,7 @@ public:
         return true;
     }
 
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
@@ -51,6 +51,7 @@ public:
         Rectangle r = Rectangle::fetch(stream, fields_mask);
         Picture_BASE result(std::move(fields_mask),
                             std::move(r));
+        if (!result.verify()) throw TLException(TLException::TYPE::BAD_MAGIC);
         return result;
     }
 
@@ -77,7 +78,7 @@ public:
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
-                    .set_fields_mask(random_mask<7>(engine))
+                    .set_fields_mask(utils::random_mask<0, 7>(engine))
                     .set_r(Rectangle::Builder::random(engine));
         }
 

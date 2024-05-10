@@ -2,44 +2,31 @@
 
 #include "fuzztest/fuzztest.h"
 
-#include "Environment.hpp"
+#include "test/Utils.hpp"
 
-#include "fuzz/statshouse/public/Metric.hpp"
-
-#include "baseline/statshouse/public/AddMetricsBatchQuery.hpp"
+#include "test/fuzz/statshouse/public/Metric.hpp"
 
 
 
 namespace fuzz_details {
 
 struct AddMetricsBatchQuery {
-    using Type = ::statshouse::AddMetricsBatchQuery;
-    using Builder = Type::Builder;
 
-    Builder toBuilder() const noexcept
+    auto toBuilder() const noexcept
     {
-        Builder result;
-
-        std::vector<::statshouse::Metric::Builder> arr;
-        arr.reserve(s_metrics.size());
-        for (const auto& value : s_metrics) {
-            arr.emplace_back(value.toBuilder());
-        }
-
-        result.set_fields_mask(s_fields_mask)
-                .set_metrics(arr);
-
-        return result;
+        return typename ::statshouse::AddMetricsBatchQuery::Builder {}
+                .set_fields_mask(fields_mask)
+                .set_metrics(metrics.toBuilder<false>());
     }
 
-    uint32_t s_fields_mask;
-    std::vector<Metric> s_metrics;
+    uint32_t fields_mask;
+    ArrayMetric<false> metrics;
 };
 
 auto domainAddMetricsBatchQuery()
 {
     return fuzztest::StructOf<AddMetricsBatchQuery>(fuzztest::Arbitrary<uint32_t>(),
-                                                    fuzztest::VectorOf(domainMetric()).WithMaxSize(1000));
+                                                    domainArrayMetric<false>());
 }
 
 }    // namespace fuzz_details

@@ -11,7 +11,7 @@ namespace opus::inl::simple {
 template <bool BOXED>
 class Picture_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Picture");
+    static constexpr Magic MAGIC = 3553825019;
     static constexpr bool STATIC = false;
 
     Picture_BASE() noexcept = default;
@@ -52,7 +52,7 @@ public:
             MAGIC.store(stream);
         }
         m_fields_mask.store(stream);
-        m_r.store(stream, m_fields_mask);
+        m_r.store(stream, get_fields_mask());
     }
 
     class Builder {
@@ -69,7 +69,7 @@ public:
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
-                    .set_fields_mask(random_mask<7>(engine))
+                    .set_fields_mask(utils::random_mask<0, 7>(engine))
                     .set_r(Rectangle::Builder::random(engine));
         }
 

@@ -16,5 +16,8 @@
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    int res = RUN_ALL_TESTS();
+    std::cout << "TOTAL_ALLOCATIONS: " << stats::total_allocations << std::endl;
+    std::cout << "TOTAL_BYTES_ALLOCATED: " << stats::total_bytes_allocated << std::endl;
+    return res;
 }

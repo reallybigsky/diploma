@@ -14,7 +14,7 @@ namespace opus::proxy::simple {
 template <bool BOXED>
 class CompoundRTS_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("CompoundRTS");
+    static constexpr Magic MAGIC = 3824220113;
     static constexpr bool STATIC = false;
 
     CompoundRTS_BASE() noexcept = default;
@@ -66,12 +66,12 @@ public:
         return m_Array1;
     }
 
-    Int get_Int1() const noexcept
+    const Int& get_Int1() const noexcept
     {
         return m_Int1;
     }
 
-    Long get_Long1() const noexcept
+    const Long& get_Long1() const noexcept
     {
         return m_Long1;
     }
@@ -81,7 +81,7 @@ public:
         return m_String1;
     }
 
-    IntDouble get_IntDouble1() const noexcept
+    const IntDouble& get_IntDouble1() const noexcept
     {
         return m_IntDouble1;
     }

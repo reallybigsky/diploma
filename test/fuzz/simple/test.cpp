@@ -21,8 +21,8 @@ auto SimpleDomain()
 {
     return fuzztest::VariantOf(
             fuzz_details::domainString(),
-            fuzz_details::domainArrayArrayString<true>(),
-            fuzz_details::domainArrayArrayString<false>(),
+            fuzz_details::domainArrayString<true>(),
+            fuzz_details::domainArrayString<false>(),
 
             fuzz_details::domainArrayPrimitive<int>(),
             fuzz_details::domainArrayArrayPrimitive<int, true>(),
@@ -131,8 +131,7 @@ auto SimpleDomain()
 
             fuzz_details::domainPicture(),
             fuzz_details::domainArrayPicture<true>(),
-            fuzz_details::domainArrayPicture<false>()
-    );
+            fuzz_details::domainArrayPicture<false>());
 }
 
 using SimpleVariant = std::variant<
@@ -247,8 +246,7 @@ using SimpleVariant = std::variant<
 
         fuzz_details::Picture,
         fuzz_details::ArrayPicture<true>,
-        fuzz_details::ArrayPicture<false>
-        >;
+        fuzz_details::ArrayPicture<false>>;
 
 
 
@@ -299,11 +297,11 @@ public:
 
     template <bool MAGIC, typename ARG>
     void doStoreFetch(ARG&& arg)
-    requires(requires { std::decay_t<ARG>::MAX_MASK_VALUE; })
+    requires(requires { std::decay_t<ARG>::MIN_MASK_VALUE; std::decay_t<ARG>::MAX_MASK_VALUE; })
     {
         auto builder = arg.template toBuilder<true>();
         using TL_TYPE = std::decay_t<decltype(builder)>::TYPE;
-        Nat mask = random_mask<std::decay_t<ARG>::MAX_MASK_VALUE>(DEFAULT_RANDOM_ENGINE);
+        Nat mask = utils::random_mask<std::decay_t<ARG>::MIN_MASK_VALUE, std::decay_t<ARG>::MAX_MASK_VALUE>(DEFAULT_RANDOM_ENGINE);
 
         builder.store(os, mask);
 
@@ -326,4 +324,7 @@ public:
 
 
 
-FUZZ_TEST_F(SimpleFuzzBlockStream, storeFetch).WithDomains(fuzztest::Arbitrary<bool>(), SimpleDomain());
+FUZZ_TEST_F(SimpleFuzzBlockStream, storeFetch)
+        .WithDomains(
+                fuzztest::Arbitrary<bool>(),
+                SimpleDomain());

@@ -11,7 +11,7 @@ namespace opus::proxy_naive::simple {
 template <bool BOXED>
 class Picture_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Picture");
+    static constexpr Magic MAGIC = 3553825019;
     static constexpr bool STATIC = false;
 
     Picture_BASE() noexcept = default;
@@ -31,9 +31,9 @@ public:
         return true;
     }
 
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
-        return Nat {m_proxy_1, PROXY_1_FIELDS_MASK_OFFSET};
+        return m_fields_mask;
     }
 
     const Rectangle& get_r() const noexcept
@@ -47,11 +47,11 @@ public:
             Magic magic = Magic::fetch(stream);
             if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
         }
-        Proxy proxy_1 = Proxy::fetch(stream, PROXY_1_SIZEOF);
-        Nat fields_mask(proxy_1, PROXY_1_FIELDS_MASK_OFFSET);
+        Nat fields_mask = Nat::fetch(stream);
         Rectangle r = Rectangle::fetch(stream, fields_mask);
-        Picture_BASE result(std::move(proxy_1),
+        Picture_BASE result(std::move(fields_mask),
                             std::move(r));
+        if (!result.verify()) throw TLException(TLException::TYPE::BAD_MAGIC);
         return result;
     }
 
@@ -60,7 +60,7 @@ public:
         if constexpr (BOXED) {
             MAGIC.store(stream);
         }
-        m_proxy_1.store(stream, PROXY_1_SIZEOF);
+        m_fields_mask.store(stream);
         m_r.store(stream, get_fields_mask());
     }
 
@@ -78,7 +78,7 @@ public:
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
-                    .set_fields_mask(random_mask<7>(engine))
+                    .set_fields_mask(utils::random_mask<0, 7>(engine))
                     .set_r(Rectangle::Builder::random(engine));
         }
 
@@ -109,16 +109,13 @@ public:
     };
 
 private:
-    static constexpr offset_t PROXY_1_SIZEOF = Nat::SIZEOF;
-    static constexpr offset_t PROXY_1_FIELDS_MASK_OFFSET = 0;
-
-    Picture_BASE(Proxy&& proxy_1,
+    Picture_BASE(Nat&& fields_mask,
                  Rectangle&& r) noexcept
-        : m_proxy_1(std::move(proxy_1))
+        : m_fields_mask(std::move(fields_mask))
         , m_r(std::move(r))
     {}
 
-    Proxy m_proxy_1;
+    Nat m_fields_mask;
     Rectangle m_r;
 };
 

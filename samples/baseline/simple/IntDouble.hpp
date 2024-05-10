@@ -8,12 +8,12 @@ namespace baseline::simple {
 
 template <bool BOXED>
 class IntDouble_BASE
-    : private MAYBE<Magic, BOXED, COMPILE_TIME_CRC32_STR("IntDouble")> {
+    : private MAYBE<Magic, BOXED, 2072402389> {
 private:
-    using m_magic = MAYBE<Magic, BOXED, COMPILE_TIME_CRC32_STR("IntDouble")>;
+    using m_magic = MAYBE<Magic, BOXED, 2072402389>;
 
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("IntDouble");
+    static constexpr Magic MAGIC = 2072402389;
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                        + Int::SIZEOF
                                        + Double::SIZEOF;

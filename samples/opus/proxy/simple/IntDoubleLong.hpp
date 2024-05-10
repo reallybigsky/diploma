@@ -9,7 +9,7 @@ namespace opus::proxy::simple {
 template <bool BOXED>
 class IntDoubleLong_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("IntDoubleLong");
+    static constexpr Magic MAGIC = 2222193245;
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                      + Int::SIZEOF
                                      + Double::SIZEOF

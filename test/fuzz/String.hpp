@@ -13,7 +13,7 @@ struct String {
     template <bool BOXED>
     auto toBuilder() const noexcept
     {
-        return typename ::ArrayBase<symbol_t, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, symbol_t>::Builder {}
                 .setString(str);
     }
 
@@ -43,11 +43,11 @@ struct ArrayString {
     template <bool BOXED>
     auto toBuilder() const noexcept
     {
-        std::vector<typename ::ArrayBase<symbol_t, INNER_BOXED>::Builder> tmp;
+        std::vector<typename ::ArrayBase<INNER_BOXED, symbol_t>::Builder> tmp;
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<::ArrayBase<symbol_t, INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, ::ArrayBase<INNER_BOXED, symbol_t>>::Builder {}
                 .setArray(tmp);
     }
 
@@ -55,7 +55,7 @@ struct ArrayString {
 };
 
 template <bool INNER_BOXED>
-auto domainArrayArrayString()
+auto domainArrayString()
 {
     return fuzztest::StructOf<ArrayString<INNER_BOXED>>(fuzztest::VectorOf(domainString()).WithMaxSize(1024));
 }

@@ -9,6 +9,7 @@
 namespace fuzz_details {
 
 struct Point {
+    static constexpr Nat MIN_MASK_VALUE = 0;
     static constexpr Nat MAX_MASK_VALUE = 7;
 
     template <bool BOXED>
@@ -36,6 +37,7 @@ auto domainPoint()
 
 template <bool INNER_BOXED>
 struct ArrayPoint {
+    static constexpr Nat MIN_MASK_VALUE = 0;
     static constexpr Nat MAX_MASK_VALUE = 7;
 
     template <bool BOXED>
@@ -45,7 +47,7 @@ struct ArrayPoint {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::Point_BASE<INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::Point_BASE<INNER_BOXED>>::Builder {}
                 .setArray(tmp);
     }
 
@@ -105,7 +107,7 @@ struct ArrayPoint_s {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::Point_BASE<INNER_BOXED, MASK>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::Point_BASE<INNER_BOXED, MASK>>::Builder {}
                 .setArray(tmp);
     }
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utils/crc.hpp"
-
 #include "prelude/Common.hpp"
 #include "prelude/opus/InputStream.hpp"
 #include "prelude/opus/OutputStream.hpp"
@@ -16,15 +14,15 @@
 
 namespace opus {
 
-template <TLType T, bool BOXED>
+template <bool BOXED, TLType T>
 class ArrayBase;
 
 
 
 template <bool BOXED>
-class ArrayBase<symbol_t, BOXED> {
+class ArrayBase<BOXED, symbol_t> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("String");
+    static constexpr Magic MAGIC = 106168542;
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -73,7 +71,7 @@ public:
 
 
 
-    static ArrayBase<symbol_t, BOXED> fetch(InputStream& stream)
+    static ArrayBase fetch(InputStream& stream)
     {
         if constexpr (BOXED) {
             Magic magic = Magic::fetch(stream);
@@ -102,7 +100,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<symbol_t, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, symbol_t>& rhs) noexcept
         {
             if (lhs.b_str.size() != rhs.size())
                 return false;
@@ -164,7 +162,7 @@ public:
         using pointer = const value_type*;
         using reference = const value_type&;
 
-        Iterator(const ArrayBase<symbol_t, BOXED>& arr) noexcept
+        Iterator(const ArrayBase<BOXED, symbol_t>& arr) noexcept
             : i_arr(arr)
             , i_outer_pos(0)
             , i_inner_pos(0)
@@ -211,7 +209,7 @@ public:
         friend bool operator==(const Iterator& a, const Iterator& b) noexcept = default;
 
     private:
-        ArrayBase<symbol_t, BOXED> i_arr;
+        ArrayBase<BOXED, symbol_t> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
         uintptr_t* i_entry = nullptr;
@@ -229,10 +227,10 @@ private:
 
 
 
-template <Primitive T, bool BOXED>
-class ArrayBase<Scalar<T>, BOXED> {
+template <bool BOXED, Primitive T>
+class ArrayBase<BOXED, Scalar<T>> {
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Array"), Scalar<T>::MAGIC);
+    static constexpr Magic MAGIC = utils::commutative(1351535537, Scalar<T>::MAGIC);
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -315,7 +313,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<Scalar<T>, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, Scalar<T>>& rhs) noexcept
         {
             if (lhs.b_arr.size() != rhs.size())
                 return false;
@@ -397,7 +395,7 @@ public:
         using pointer = const value_type*;
         using reference = const value_type&;
 
-        Iterator(const ArrayBase<Scalar<T>, BOXED>& arr) noexcept
+        Iterator(const ArrayBase<BOXED, Scalar<T>>& arr) noexcept
             : i_arr(arr)
             , i_outer_pos(0)
             , i_inner_pos(0)
@@ -450,7 +448,7 @@ public:
         friend bool operator==(const Iterator& a, const Iterator& b) noexcept = default;
 
     private:
-        ArrayBase<Scalar<T>, BOXED> i_arr;
+        ArrayBase<BOXED, Scalar<T>> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
         uintptr_t* i_entry = nullptr;
@@ -468,10 +466,10 @@ private:
 
 
 
-template <Struct T, bool BOXED>
-class ArrayBase<T, BOXED> {
+template <bool BOXED, Struct T>
+class ArrayBase<BOXED, T> {
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Array"), T::MAGIC);
+    static constexpr Magic MAGIC = utils::commutative(1351535537, T::MAGIC);
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -538,7 +536,7 @@ public:
 
 
 
-    static ArrayBase<T, BOXED> fetch(InputStream& stream)
+    static ArrayBase fetch(InputStream& stream)
     {
         if constexpr (BOXED) {
             Magic magic = Magic::fetch(stream);
@@ -548,7 +546,7 @@ public:
         Nat size = Nat::fetch(stream);
         ArrayProxy<T> proxy = stream.fetchArray<T>(size);
 
-        ArrayBase<T, BOXED> result(std::move(proxy), size);
+        ArrayBase result(std::move(proxy), size);
         if (!result.verify()) throw TLException(TLException::TYPE::BAD_MAGIC);
 
         return result;
@@ -575,7 +573,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<T, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, T>& rhs) noexcept
         {
             if (lhs.b_arr.size() != rhs.size())
                 return false;
@@ -641,7 +639,7 @@ public:
         using pointer = Iterator&;
         using reference = value_type;
 
-        Iterator(const ArrayBase<T, BOXED>& arr) noexcept
+        Iterator(const ArrayBase<BOXED, T>& arr) noexcept
             : i_arr(arr)
             , i_outer_pos(0)
             , i_inner_pos(0)
@@ -697,7 +695,7 @@ public:
         friend bool operator==(const Iterator& a, const Iterator& b) noexcept = default;
 
     private:
-        ArrayBase<T, BOXED> i_arr;
+        ArrayBase<BOXED, T> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
         uintptr_t* i_entry = nullptr;
@@ -715,8 +713,8 @@ private:
 
 
 
-template <DynamicType T, bool BOXED>
-class ArrayBase<T, BOXED> {
+template <bool BOXED, DynamicType T>
+class ArrayBase<BOXED, T> {
 public:
     static constexpr Magic MAGIC = 0;
     static constexpr bool STATIC = false;
@@ -768,7 +766,7 @@ public:
 
 
     template <typename... ARGS>
-    static ArrayBase<T, BOXED> fetch(InputStream& stream, ARGS&&... args)
+    static ArrayBase fetch(InputStream& stream, ARGS&&... args)
     {
         if constexpr (BOXED) {
             Magic magic = Magic::fetch(stream);
@@ -810,7 +808,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<T, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, T>& rhs) noexcept
         {
             if (lhs.b_arr.size() != rhs.size())
                 return false;
@@ -893,7 +891,7 @@ public:
         using pointer = const value_type*;
         using reference = const value_type&;
 
-        Iterator(const ArrayBase<T, BOXED>& arr) noexcept
+        Iterator(const ArrayBase<BOXED, T>& arr) noexcept
             : i_arr(arr)
             , i_pos(0)
         {
@@ -933,7 +931,7 @@ public:
         friend bool operator==(const Iterator& a, const Iterator& b) noexcept = default;
 
     private:
-        ArrayBase<T, BOXED> i_arr;
+        ArrayBase<BOXED, T> i_arr;
         size_t i_pos = 0;
     };
 
@@ -944,5 +942,63 @@ private:
 
     ArrayProxy<T> m_proxy;
 };
+
+
+
+template <TLType T>
+using Array = ArrayBase<true, T>;
+
+template <TLType T>
+using array = ArrayBase<false, T>;
+
+using String = Array<symbol_t>;
+using string = array<symbol_t>;
+
+
+
+template <TLType T, bool LHS_BOXED, bool RHS_BOXED>
+bool operator==(const ArrayBase<LHS_BOXED, T>& lhs, const ArrayBase<RHS_BOXED, T>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
+
+
+
+template <bool BOXED>
+bool operator==(const ArrayBase<BOXED, symbol_t>& lhs, std::string_view rhs) noexcept
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+    return true;
+}
+
+
+
+template <typename T, typename U, bool BOXED>
+bool operator==(const ArrayBase<BOXED, T>& lhs, const std::vector<U>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
 
 }    // namespace opus

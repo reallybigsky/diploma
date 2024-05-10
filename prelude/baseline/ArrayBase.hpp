@@ -1,9 +1,8 @@
 #pragma once
 
-#include "utils/crc.hpp"
-
 #include "prelude/Common.hpp"
 #include "prelude/Scalar.hpp"
+#include "prelude/baseline/Allocator.hpp"
 #include "prelude/baseline/InputStream.hpp"
 #include "prelude/baseline/OutputStream.hpp"
 
@@ -12,21 +11,20 @@
 #include <random>
 #include <string>
 #include <type_traits>
-#include <vector>
 
 
 
 namespace baseline {
 
-template <TLType T, bool BOXED>
+template <bool BOXED, TLType T>
 class ArrayBase;
 
 
 
 template <bool BOXED>
-class ArrayBase<symbol_t, BOXED> {
+class ArrayBase<BOXED, symbol_t> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("String");
+    static constexpr Magic MAGIC = 106168542;
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -97,7 +95,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<symbol_t, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, symbol_t>& rhs) noexcept
         {
             if (lhs.b_str.size() != rhs.size())
                 return false;
@@ -150,19 +148,19 @@ public:
     };
 
 private:
-    ArrayBase(std::vector<symbol_t>&& data) noexcept
+    ArrayBase(VectorImpl<symbol_t>&& data) noexcept
         : m_data(std::move(data))
     {}
 
-    std::vector<symbol_t> m_data;
+    VectorImpl<symbol_t> m_data;
 };
 
 
 
-template <Primitive T, bool BOXED>
-class ArrayBase<Scalar<T>, BOXED> {
+template <bool BOXED, Primitive T>
+class ArrayBase<BOXED, Scalar<T>> {
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Array"), Scalar<T>::MAGIC);
+    static constexpr Magic MAGIC = utils::commutative(1351535537, Scalar<T>::MAGIC);
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -211,7 +209,7 @@ public:
             if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
         }
 
-        std::vector<T> data = stream.fetchArray<T>();
+        VectorImpl<T> data = stream.fetchArray<T>();
         return {std::move(data)};
     }
 
@@ -233,7 +231,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<Scalar<T>, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, Scalar<T>>& rhs) noexcept
         {
             if (lhs.b_arr.size() != rhs.size())
                 return false;
@@ -306,20 +304,20 @@ public:
     };
 
 private:
-    ArrayBase(std::vector<T>&& data) noexcept
+    ArrayBase(VectorImpl<T>&& data) noexcept
         : m_data(std::move(data))
     {}
 
-    std::vector<T> m_data;
+    VectorImpl<T> m_data;
 };
 
 
 
-template <TLType T, bool BOXED>
+template <bool BOXED, TLType T>
 requires(!Primitive<T> && !std::is_same_v<T, symbol_t>)
-class ArrayBase<T, BOXED> {
+class ArrayBase<BOXED, T> {
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Array"), T::MAGIC);
+    static constexpr Magic MAGIC = utils::commutative(1351535537, T::MAGIC);
     static constexpr bool STATIC = false;
 
     ArrayBase() noexcept = default;
@@ -370,7 +368,7 @@ public:
         }
 
         Nat size = Nat::fetch(stream);
-        std::vector<T> data(size);
+        VectorImpl<T> data(size);
         for (size_t i = 0; i < size; ++i) {
             data[i] = T::fetch(stream, std::forward<ARGS>(args)...);
         }
@@ -403,7 +401,7 @@ public:
         using TYPE = ArrayBase;
 
         template <bool RHS_BOXED>
-        friend bool operator==(const Builder& lhs, const ArrayBase<T, RHS_BOXED>& rhs) noexcept
+        friend bool operator==(const Builder& lhs, const ArrayBase<RHS_BOXED, T>& rhs) noexcept
         {
             if (lhs.b_arr.size() != rhs.size())
                 return false;
@@ -447,7 +445,7 @@ public:
             return Builder {}.setArray(std::move(vec));
         }
 
-        Builder& setArray(const std::vector<TBuilder>& value) noexcept
+        Builder& setArray(std::vector<TBuilder>& value) noexcept
         {
             b_arr = value;
             return *this;
@@ -477,11 +475,69 @@ public:
     };
 
 private:
-    ArrayBase(std::vector<T>&& data) noexcept
+    ArrayBase(VectorImpl<T>&& data) noexcept
         : m_data(std::move(data))
     {}
 
-    std::vector<T> m_data;
+    VectorImpl<T> m_data;
 };
+
+
+
+template <TLType T>
+using Array = ArrayBase<true, T>;
+
+template <TLType T>
+using array = ArrayBase<false, T>;
+
+using String = Array<symbol_t>;
+using string = array<symbol_t>;
+
+
+
+template <TLType T, bool LHS_BOXED, bool RHS_BOXED>
+bool operator==(const ArrayBase<LHS_BOXED, T>& lhs, const ArrayBase<RHS_BOXED, T>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
+
+
+
+template <bool BOXED>
+bool operator==(const ArrayBase<BOXED, symbol_t>& lhs, std::string_view rhs) noexcept
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+    return true;
+}
+
+
+
+template <typename T, typename U, typename A, bool BOXED>
+bool operator==(const ArrayBase<BOXED, T>& lhs, const std::vector<U, A>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
 
 }    // namespace baseline

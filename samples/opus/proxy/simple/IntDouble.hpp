@@ -8,12 +8,12 @@ namespace opus::proxy::simple {
 
 template <bool BOXED>
 class IntDouble_BASE
-    : private MAYBE<Magic, BOXED, 0> {
+    : private MAYBE<Magic, BOXED, 2072402389> {
 private:
-    using m_magic = MAYBE<Magic, BOXED, 0>;
+    using m_magic = MAYBE<Magic, BOXED, 2072402389>;
 
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("IntDouble");
+    static constexpr Magic MAGIC = 2072402389;
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                      + Int::SIZEOF
                                      + Double::SIZEOF;
@@ -49,12 +49,12 @@ public:
         return true;
     }
 
-    Int get_Int1() const noexcept
+    const Int& get_Int1() const noexcept
     {
         return m_Int1;
     }
 
-    Double get_Double1() const noexcept
+    const Double& get_Double1() const noexcept
     {
         return m_Double1;
     }

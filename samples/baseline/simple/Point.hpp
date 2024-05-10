@@ -12,7 +12,7 @@ class Point_BASE;
 template <bool BOXED>
 class Point_BASE<BOXED> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Point");
+    static constexpr Magic MAGIC = 2850977279;
     static constexpr bool STATIC = false;
 
     Point_BASE() noexcept = default;
@@ -137,18 +137,18 @@ private:
 
 template <bool BOXED, Nat MASK>
 class Point_BASE<BOXED, MASK>
-    : private MAYBE<Magic, BOXED, utils::commutative(COMPILE_TIME_CRC32_STR("Point"), MASK)>
-    , private MAYBE<Long, IS_SET(MASK, 0), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 0)>
-    , private MAYBE<Long, IS_SET(MASK, 1), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 1)>
-    , private MAYBE<Long, IS_SET(MASK, 2), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 2)> {
+    : private MAYBE<Magic, BOXED, utils::commutative(2850977279, MASK)>
+    , private MAYBE<Long, IS_SET(MASK, 0), utils::commutative(2850977279, 0)>
+    , private MAYBE<Long, IS_SET(MASK, 1), utils::commutative(2850977279, 1)>
+    , private MAYBE<Long, IS_SET(MASK, 2), utils::commutative(2850977279, 2)> {
 private:
-    using m_magic = MAYBE<Magic, BOXED, utils::commutative(COMPILE_TIME_CRC32_STR("Point"), MASK)>;
-    using m_x = MAYBE<Long, IS_SET(MASK, 0), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 0)>;
-    using m_y = MAYBE<Long, IS_SET(MASK, 1), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 1)>;
-    using m_z = MAYBE<Long, IS_SET(MASK, 2), utils::commutative(COMPILE_TIME_CRC32_STR("Point"), 2)>;
+    using m_magic = MAYBE<Magic, BOXED, utils::commutative(2850977279, MASK)>;
+    using m_x = MAYBE<Long, IS_SET(MASK, 0), utils::commutative(2850977279, 0)>;
+    using m_y = MAYBE<Long, IS_SET(MASK, 1), utils::commutative(2850977279, 1)>;
+    using m_z = MAYBE<Long, IS_SET(MASK, 2), utils::commutative(2850977279, 2)>;
 
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Point"), MASK);
+    static constexpr Magic MAGIC = utils::commutative(2850977279, MASK);
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                        + (IS_SET(MASK, 0) ? Long::SIZEOF : 0)
                                        + (IS_SET(MASK, 1) ? Long::SIZEOF : 0)

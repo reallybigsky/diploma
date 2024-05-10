@@ -14,7 +14,7 @@ class Rectangle_BASE;
 template <bool BOXED>
 class Rectangle_BASE<BOXED> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Rectangle");
+    static constexpr Magic MAGIC = 2909707313;
     static constexpr bool STATIC = false;
 
     Rectangle_BASE() noexcept = default;
@@ -122,7 +122,7 @@ private:
 template <bool BOXED, Nat MASK>
 class Rectangle_BASE<BOXED, MASK> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Rectangle");
+    static constexpr Magic MAGIC = utils::commutative(2909707313, MASK);
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                        + point_s<MASK>::SIZEOF
                                        + point_s<MASK>::SIZEOF;

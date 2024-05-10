@@ -42,7 +42,7 @@ struct ArrayIntDoubleLong {
         tmp.reserve(arr.size());
         std::ranges::for_each(arr, [&](auto&& it) { tmp.emplace_back(it.template toBuilder<INNER_BOXED>()); });
 
-        return typename ::ArrayBase<simple::IntDoubleLong_BASE<INNER_BOXED>, BOXED>::Builder {}
+        return typename ::ArrayBase<BOXED, simple::IntDoubleLong_BASE<INNER_BOXED>>::Builder {}
                 .setArray(tmp);
     }
 

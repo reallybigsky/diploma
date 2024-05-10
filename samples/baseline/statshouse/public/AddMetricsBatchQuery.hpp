@@ -1,7 +1,8 @@
 #pragma once
 
-#include "baseline/Includes.hpp"
-#include "baseline/statshouse/public/Metric.hpp"
+#include "prelude/baseline/Includes.hpp"
+
+#include "samples/baseline/statshouse/public/Metric.hpp"
 
 
 
@@ -9,9 +10,7 @@ namespace baseline::statshouse {
 
 class AddMetricsBatchQuery {
 public:
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
     static constexpr Magic MAGIC = 2586840297;
-    static constexpr bool CTS = false;
 
     AddMetricsBatchQuery() noexcept = default;
 
@@ -22,57 +21,54 @@ public:
 
     ~AddMetricsBatchQuery() noexcept = default;
 
-    AddMetricsBatchQuery(Nat fields_mask,
-                         const array<Metric>& metrics) noexcept
-        : m_fields_mask(fields_mask)
-        , m_metrics(metrics)
-    {}
-
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
 
-    const array<Metric>& get_metrics() const noexcept
+    const array<metric>& get_metrics() const noexcept
     {
         return m_metrics;
     }
 
     static AddMetricsBatchQuery fetch(InputStream& stream)
     {
-        // HighLevel => fetch magic in higher variant
-        //
-        // Magic magic = Magic::fetch(stream);
-        // if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
-
         Nat fields_mask = Nat::fetch(stream);
-        array<Metric> metrics = array<Metric>::fetch(stream);
-        return {fields_mask,
-                metrics};
+        array<metric> metrics = array<metric>::fetch(stream);
+        AddMetricsBatchQuery result {std::move(fields_mask),
+                                     std::move(metrics)};
+        return result;
     }
 
     void store(OutputStream& stream) const
     {
-        MAGIC.store(stream);
         m_fields_mask.store(stream);
         m_metrics.store(stream);
     }
 
     class Builder {
     public:
-        friend bool operator==(const Builder& lhs, const AddMetricsBatchQuery& rhs)
+        friend bool operator==(const Builder& lhs, const AddMetricsBatchQuery& rhs) noexcept
         {
             return lhs.b_fields_mask == rhs.get_fields_mask()
                    && lhs.b_metrics == rhs.get_metrics();
         }
 
-        Builder& set_fields_mask(Nat::Builder value) noexcept
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6>
+        static Builder random(std::default_random_engine& engine) noexcept
+        {
+            return Builder {}
+                    .set_fields_mask(Nat::Builder::random(engine))
+                    .set_metrics(array<Metric>::Builder::random<SIZE_1, SIZE_2, SIZE_3, SIZE_4, SIZE_5, SIZE_6>(engine));
+        }
+
+        Builder& set_fields_mask(const Nat::Builder& value) noexcept
         {
             b_fields_mask = value;
             return *this;
         }
 
-        Builder& set_metrics(const array<Metric>::Builder& value) noexcept
+        Builder& set_metrics(const array<metric>::Builder& value) noexcept
         {
             b_metrics = value;
             return *this;
@@ -87,12 +83,24 @@ public:
 
     private:
         Nat::Builder b_fields_mask;
-        array<Metric>::Builder b_metrics;
+        array<metric>::Builder b_metrics;
     };
 
 private:
+    AddMetricsBatchQuery(Nat&& fields_mask,
+                         array<metric>&& metrics) noexcept
+        : m_fields_mask(std::move(fields_mask))
+        , m_metrics(std::move(metrics))
+    {}
+
     Nat m_fields_mask;
-    array<Metric> m_metrics;
+    array<metric> m_metrics;
 };
+
+bool operator==(const AddMetricsBatchQuery& lhs, const AddMetricsBatchQuery& rhs) noexcept
+{
+    return lhs.get_fields_mask() == rhs.get_fields_mask()
+           && lhs.get_metrics() == rhs.get_metrics();
+}
 
 }    // namespace baseline::statshouse

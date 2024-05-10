@@ -9,7 +9,7 @@ namespace opus::inl::simple {
 template <bool BOXED>
 class StringIntLong_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("StringIntLong");
+    static constexpr Magic MAGIC = 1692638294;
     static constexpr bool STATIC = false;
 
     StringIntLong_BASE() noexcept = default;

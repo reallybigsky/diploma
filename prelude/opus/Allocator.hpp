@@ -6,18 +6,29 @@
 
 #define DEFAULT_ALLOC
 
-namespace opus::alloc {
+namespace opus {
 
+namespace stats {
+size_t total_allocations = 0;
+size_t total_bytes_allocated = 0;
+}    // namespace stats
+
+class Allocator {
+public:
 #ifdef DEFAULT_ALLOC
-void* allocate(size_t size)
-{
-    return malloc(size);
-}
+    static void* allocate(size_t size)
+    {
+        ++stats::total_allocations;
+        stats::total_bytes_allocated += size;
+        return malloc(size);
+    }
 
-void deallocate(void* ptr) noexcept
-{
-    free(ptr);
-}
+    static void deallocate(void* ptr) noexcept
+    {
+        free(ptr);
+    }
 #endif
+};
 
-}    // namespace alloc
+
+}    // namespace opus

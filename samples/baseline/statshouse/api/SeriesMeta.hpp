@@ -1,162 +1,167 @@
 #pragma once
 
-#include "baseline/Includes.hpp"
+#include "prelude/baseline/Includes.hpp"
+
+#include "samples/baseline/statshouse/Dictionary.hpp"
+#include "samples/baseline/statshouse/api/Function.hpp"
 
 
 
 namespace baseline::statshouse {
 
-template <Nat... MASK>
-class SeriesMeta;
+template <bool BOXED, Nat...>
+class SeriesMeta_BASE;
 
-template <>
-class SeriesMeta<> {
+template <bool BOXED>
+class SeriesMeta_BASE<BOXED> {
 public:
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
     static constexpr Magic MAGIC = 3280544510;
-    static constexpr bool CTS = false;
+    static constexpr bool STATIC = false;
 
-    SeriesMeta() noexcept = default;
+    SeriesMeta_BASE() noexcept = default;
 
-    SeriesMeta(const SeriesMeta&) noexcept = default;
-    SeriesMeta(SeriesMeta&&) noexcept = default;
-    SeriesMeta& operator=(const SeriesMeta&) noexcept = default;
-    SeriesMeta& operator=(SeriesMeta&&) noexcept = default;
+    SeriesMeta_BASE(const SeriesMeta_BASE&) noexcept = default;
+    SeriesMeta_BASE(SeriesMeta_BASE&&) noexcept = default;
+    SeriesMeta_BASE& operator=(const SeriesMeta_BASE&) noexcept = default;
+    SeriesMeta_BASE& operator=(SeriesMeta_BASE&&) noexcept = default;
 
-    ~SeriesMeta() noexcept = default;
+    ~SeriesMeta_BASE() noexcept = default;
 
-    SeriesMeta(Nat fields_mask,
-               Long time_shift,
-               const Dictionary<string>& tags,
-               Nat what,
-               const string& name,
-               const string& color,
-               Int total,
-               const Array<string>& max_hosts) noexcept
-        : m_fields_mask(fields_mask)
-        , m_time_shift(time_shift)
-        , m_tags(tags)
-        , m_what(what)
-        , m_name(name)
-        , m_color(color)
-        , m_total(total)
-        , m_max_hosts(max_hosts)
-    {}
-
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
 
-    Long get_time_shift() const noexcept
+    const Long& get_time_shift() const noexcept
     {
         return m_time_shift;
     }
 
-    const Dictionary<string>& get_tags() const noexcept
+    const dictionary<string>& get_tags() const noexcept
     {
         return m_tags;
     }
 
-    Nat get_what() const noexcept
+    const std::optional<Function>& get_what() const noexcept
     {
         return m_what;
     }
 
-    const string& get_name() const noexcept
+    const std::optional<string>& get_name() const noexcept
     {
         return m_name;
     }
 
-    const string& get_color() const noexcept
+    const std::optional<string>& get_color() const noexcept
     {
         return m_color;
     }
 
-    Int get_total() const noexcept
+    const std::optional<Int>& get_total() const noexcept
     {
         return m_total;
     }
 
-    const Array<string>& get_max_hosts() const noexcept
+    const std::optional<array<string>>& get_max_hosts() const noexcept
     {
         return m_max_hosts;
     }
 
-    static SeriesMeta fetch(Nat query_fields_mask, InputStream& stream)
+    static SeriesMeta_BASE fetch(InputStream& stream, Nat query_fields_mask)
     {
-        Magic magic = Magic::fetch(stream);
-        if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
-
+        if constexpr (BOXED) {
+            Magic magic = Magic::fetch(stream);
+            if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
+        }
         Nat fields_mask = Nat::fetch(stream);
         Long time_shift = Long::fetch(stream);
-        Dictionary<string> tags = Dictionary<string>::fetch(stream);
-        Nat what;
-        if (IS_SET(fields_mask, 1)) what = Nat::fetch(stream);
-        string name;
+        dictionary<string> tags = dictionary<string>::fetch(stream);
+        std::optional<Function> what;
+        if (IS_SET(fields_mask, 1)) what = Function::fetch(stream);
+        std::optional<string> name;
         if (IS_SET(query_fields_mask, 4)) name = string::fetch(stream);
-        string color;
+        std::optional<string> color;
         if (IS_SET(query_fields_mask, 5)) color = string::fetch(stream);
-        Int total;
+        std::optional<Int> total;
         if (IS_SET(query_fields_mask, 6)) total = Int::fetch(stream);
-        Array<string> max_hosts;
-        if (IS_SET(query_fields_mask, 7)) max_hosts = Array<string>::fetch(stream);
-        return {fields_mask,
-                time_shift,
-                tags,
-                what,
-                name,
-                color,
-                total,
-                max_hosts};
+        std::optional<array<string>> max_hosts;
+        if (IS_SET(query_fields_mask, 7)) max_hosts = array<string>::fetch(stream);
+        SeriesMeta_BASE result(std::move(fields_mask),
+                               std::move(time_shift),
+                               std::move(tags),
+                               std::move(what),
+                               std::move(name),
+                               std::move(color),
+                               std::move(total),
+                               std::move(max_hosts));
+        return result;
     }
 
-    void store(Nat query_fields_mask, OutputStream& stream) const
+    void store(OutputStream& stream, Nat query_fields_mask) const
     {
-        MAGIC.store(stream);
+        if constexpr (BOXED) {
+            MAGIC.store(stream);
+        }
         m_fields_mask.store(stream);
         m_time_shift.store(stream);
         m_tags.store(stream);
-        if (IS_SET(m_fields_mask, 1)) m_what.store(stream);
-        if (IS_SET(query_fields_mask, 4)) m_name.store(stream);
-        if (IS_SET(query_fields_mask, 5)) m_color.store(stream);
-        if (IS_SET(query_fields_mask, 6)) m_total.store(stream);
-        if (IS_SET(query_fields_mask, 7)) m_max_hosts.store(stream);
+        if (IS_SET(get_fields_mask(), 1)) m_what->store(stream);
+        if (IS_SET(query_fields_mask, 4)) m_name->store(stream);
+        if (IS_SET(query_fields_mask, 5)) m_color->store(stream);
+        if (IS_SET(query_fields_mask, 6)) m_total->store(stream);
+        if (IS_SET(query_fields_mask, 7)) m_max_hosts->store(stream);
     }
 
     class Builder {
     public:
-        friend bool operator==(const Builder& lhs, const SeriesMeta<>& rhs)
+        using TYPE = SeriesMeta_BASE;
+
+        template <bool RHS_BOXED>
+        friend bool operator==(const Builder& lhs, const SeriesMeta_BASE<RHS_BOXED>& rhs) noexcept
         {
             return lhs.b_fields_mask == rhs.get_fields_mask()
                    && lhs.b_time_shift == rhs.get_time_shift()
                    && lhs.b_tags == rhs.get_tags()
-                   && (!IS_SET(lhs.b_fields_mask, 1) || lhs.b_what == rhs.get_what())
-                   && lhs.b_name == rhs.get_name()
-                   && lhs.b_color == rhs.get_color()
-                   && lhs.b_total == rhs.get_total()
-                   && lhs.b_max_hosts == rhs.get_max_hosts();
+                   && (!rhs.get_what() || lhs.b_what == rhs.get_what())
+                   && (!rhs.get_name() || lhs.b_name == rhs.get_name())
+                   && (!rhs.get_color() || lhs.b_color == rhs.get_color())
+                   && (!rhs.get_total() || lhs.b_total == rhs.get_total())
+                   && (!rhs.get_max_hosts() || lhs.b_max_hosts == rhs.get_max_hosts());
         }
 
-        Builder& set_fields_mask(Nat::Builder value) noexcept
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7>
+        static Builder random(std::default_random_engine& engine) noexcept
+        {
+            return Builder {}
+                    .set_fields_mask(utils::random_mask<0, 3>(engine))
+                    .set_time_shift(Long::Builder::random(engine))
+                    .set_tags(dictionary<string>::Builder::random<SIZE_1, SIZE_2, SIZE_3>(engine))
+                    .set_what(Function::Builder::random(engine))
+                    .set_name(string::Builder::random<SIZE_4>(engine))
+                    .set_color(string::Builder::random<SIZE_5>(engine))
+                    .set_total(Int::Builder::random(engine))
+                    .set_max_hosts(array<string>::Builder::random<SIZE_6, SIZE_7>(engine));
+        }
+
+        Builder& set_fields_mask(const Nat::Builder& value) noexcept
         {
             b_fields_mask = value;
             return *this;
         }
 
-        Builder& set_time_shift(Long::Builder value) noexcept
+        Builder& set_time_shift(const Long::Builder& value) noexcept
         {
             b_time_shift = value;
             return *this;
         }
 
-        Builder& set_tags(const Dictionary<string>::Builder& value) noexcept
+        Builder& set_tags(const dictionary<string>::Builder& value) noexcept
         {
             b_tags = value;
             return *this;
         }
 
-        Builder& set_what(Nat::Builder value) noexcept
+        Builder& set_what(const Function::Builder& value) noexcept
         {
             b_what = value;
             return *this;
@@ -174,21 +179,23 @@ public:
             return *this;
         }
 
-        Builder& set_total(Int::Builder value) noexcept
+        Builder& set_total(const Int::Builder& value) noexcept
         {
             b_total = value;
             return *this;
         }
 
-        Builder& set_max_hosts(const Array<string>::Builder& value) noexcept
+        Builder& set_max_hosts(const array<string>::Builder& value) noexcept
         {
             b_max_hosts = value;
             return *this;
         }
 
-        void store(Nat::Builder query_fields_mask, OutputStream& stream) const
+        void store(OutputStream& stream, Nat query_fields_mask) const
         {
-            MAGIC.store(stream);
+            if constexpr (BOXED) {
+                MAGIC.store(stream);
+            }
             b_fields_mask.store(stream);
             b_time_shift.store(stream);
             b_tags.store(stream);
@@ -202,168 +209,173 @@ public:
     private:
         Nat::Builder b_fields_mask;
         Long::Builder b_time_shift;
-        Dictionary<string>::Builder b_tags;
-        Nat::Builder b_what;
+        dictionary<string>::Builder b_tags;
+        Function::Builder b_what;
         string::Builder b_name;
         string::Builder b_color;
         Int::Builder b_total;
-        Array<string>::Builder b_max_hosts;
+        array<string>::Builder b_max_hosts;
     };
 
 private:
-    Nat m_fields_mask;
-    Long m_time_shift;
-    Dictionary<string> m_tags;
-    Nat m_what;
-    string m_name;
-    string m_color;
-    Int m_total;
-    Array<string> m_max_hosts;
-};
-
-template <Nat m_QUERY_FIELDS_MASK>
-class SeriesMeta<m_QUERY_FIELDS_MASK>
-    : private MAYBE<string, IS_SET(m_QUERY_FIELDS_MASK, 4), 0>
-    , private MAYBE<string, IS_SET(m_QUERY_FIELDS_MASK, 5), 1>
-    , private MAYBE<Int, IS_SET(m_QUERY_FIELDS_MASK, 6), 2>
-    , private MAYBE<Array<string>, IS_SET(m_QUERY_FIELDS_MASK, 7), 3> {
-private:
-    using t_name = MAYBE<string, IS_SET(m_QUERY_FIELDS_MASK, 4), 0>;
-    using t_color = MAYBE<string, IS_SET(m_QUERY_FIELDS_MASK, 5), 1>;
-    using t_total = MAYBE<Int, IS_SET(m_QUERY_FIELDS_MASK, 6), 2>;
-    using t_max_hosts = MAYBE<Array<string>, IS_SET(m_QUERY_FIELDS_MASK, 7), 3>;
-
-public:
-    static constexpr Nat QUERY_FIELDS_MASK = m_QUERY_FIELDS_MASK;
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
-    static constexpr Magic MAGIC = 3280544510;
-    static constexpr bool CTS = false;
-
-    SeriesMeta() noexcept = default;
-
-    SeriesMeta(const SeriesMeta&) noexcept = default;
-    SeriesMeta(SeriesMeta&&) noexcept = default;
-    SeriesMeta& operator=(const SeriesMeta&) noexcept = default;
-    SeriesMeta& operator=(SeriesMeta&&) noexcept = default;
-
-    ~SeriesMeta() noexcept = default;
-
-    SeriesMeta(Nat fields_mask,
-               Long time_shift,
-               const Dictionary<string>& tags,
-               Nat what,
-               const string& name,
-               const string& color,
-               Int total,
-               const Array<string>& max_hosts) noexcept
-        : m_fields_mask(fields_mask)
-        , m_time_shift(time_shift)
-        , m_tags(tags)
-        , m_what(what)
-        , t_name(name)
-        , t_color(color)
-        , t_total(total)
-        , t_max_hosts(max_hosts)
+    SeriesMeta_BASE(Nat&& fields_mask,
+                    Long&& time_shift,
+                    dictionary<string>&& tags,
+                    std::optional<Function>&& what,
+                    std::optional<string>&& name,
+                    std::optional<string>&& color,
+                    std::optional<Int>&& total,
+                    std::optional<array<string>>&& max_hosts) noexcept
+        : m_fields_mask(std::move(fields_mask))
+        , m_time_shift(std::move(time_shift))
+        , m_tags(std::move(tags))
+        , m_what(std::move(what))
+        , m_name(std::move(name))
+        , m_color(std::move(color))
+        , m_total(std::move(total))
+        , m_max_hosts(std::move(max_hosts))
     {}
 
-    Nat get_fields_mask() const noexcept
+    Nat m_fields_mask;
+    Long m_time_shift;
+    dictionary<string> m_tags;
+    std::optional<Function> m_what;
+    std::optional<string> m_name;
+    std::optional<string> m_color;
+    std::optional<Int> m_total;
+    std::optional<array<string>> m_max_hosts;
+};
+
+template <bool BOXED, Nat QUERY_FIELDS_MASK>
+class SeriesMeta_BASE<BOXED, QUERY_FIELDS_MASK>
+    : private MAYBE<string, IS_SET(QUERY_FIELDS_MASK, 4), utils::commutative(3280544510, 4)>
+    , private MAYBE<string, IS_SET(QUERY_FIELDS_MASK, 5), utils::commutative(3280544510, 5)>
+    , private MAYBE<Int, IS_SET(QUERY_FIELDS_MASK, 6), utils::commutative(3280544510, 6)>
+    , private MAYBE<array<string>, IS_SET(QUERY_FIELDS_MASK, 7), utils::commutative(3280544510, 7)> {
+private:
+    using m_name = MAYBE<string, IS_SET(QUERY_FIELDS_MASK, 4), utils::commutative(3280544510, 4)>;
+    using m_color = MAYBE<string, IS_SET(QUERY_FIELDS_MASK, 5), utils::commutative(3280544510, 5)>;
+    using m_total = MAYBE<Int, IS_SET(QUERY_FIELDS_MASK, 6), utils::commutative(3280544510, 6)>;
+    using m_max_hosts = MAYBE<array<string>, IS_SET(QUERY_FIELDS_MASK, 7), utils::commutative(3280544510, 7)>;
+
+public:
+    static constexpr Magic MAGIC = 3280544510;
+    static constexpr bool STATIC = false;
+
+    SeriesMeta_BASE() noexcept = default;
+
+    SeriesMeta_BASE(const SeriesMeta_BASE&) noexcept = default;
+    SeriesMeta_BASE(SeriesMeta_BASE&&) noexcept = default;
+    SeriesMeta_BASE& operator=(const SeriesMeta_BASE&) noexcept = default;
+    SeriesMeta_BASE& operator=(SeriesMeta_BASE&&) noexcept = default;
+
+    ~SeriesMeta_BASE() noexcept = default;
+
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
 
-    Long get_time_shift() const noexcept
+    const Long& get_time_shift() const noexcept
     {
         return m_time_shift;
     }
 
-    const Dictionary<string>& get_tags() const noexcept
+    const dictionary<string>& get_tags() const noexcept
     {
         return m_tags;
     }
 
-    Nat get_what() const noexcept
+    const std::optional<Function>& get_what() const noexcept
     {
         return m_what;
     }
 
     const string& get_name() const noexcept
-    requires(IS_SET(m_QUERY_FIELDS_MASK, 4))
+    requires(IS_SET(QUERY_FIELDS_MASK, 4))
     {
-        return t_name::value;
+        return m_name::value;
     }
 
     const string& get_color() const noexcept
-    requires(IS_SET(m_QUERY_FIELDS_MASK, 5))
+    requires(IS_SET(QUERY_FIELDS_MASK, 5))
     {
-        return t_color::value;
+        return m_color::value;
     }
 
-    Int get_total() const noexcept
-    requires(IS_SET(m_QUERY_FIELDS_MASK, 6))
+    const Int& get_total() const noexcept
+    requires(IS_SET(QUERY_FIELDS_MASK, 6))
     {
-        return t_total::value;
+        return m_total::value;
     }
 
-    const Array<string>& get_max_hosts() const noexcept
-    requires(IS_SET(m_QUERY_FIELDS_MASK, 7))
+    const array<string>& get_max_hosts() const noexcept
+    requires(IS_SET(QUERY_FIELDS_MASK, 7))
     {
-        return t_max_hosts::value;
+        return m_max_hosts::value;
     }
 
-    static SeriesMeta fetch(InputStream& stream)
+    static SeriesMeta_BASE fetch(InputStream& stream)
     {
-        Magic magic = Magic::fetch(stream);
-        if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
-
+        if constexpr (BOXED) {
+            Magic magic = Magic::fetch(stream);
+            if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
+        }
         Nat fields_mask = Nat::fetch(stream);
         Long time_shift = Long::fetch(stream);
-        Dictionary<string> tags = Dictionary<string>::fetch(stream);
-        Nat what;
-        if (IS_SET(fields_mask, 1)) what = Nat::fetch(stream);
+        dictionary<string> tags = dictionary<string>::fetch(stream);
+        std::optional<Function> what;
+        if (IS_SET(fields_mask, 1)) what = Function::fetch(stream);
         string name;
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 4)) name = string::fetch(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 4)) name = string::fetch(stream);
         string color;
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 5)) color = string::fetch(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 5)) color = string::fetch(stream);
         Int total;
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 6)) total = Int::fetch(stream);
-        Array<string> max_hosts;
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 7)) max_hosts = Array<string>::fetch(stream);
-        return {fields_mask,
-                time_shift,
-                tags,
-                what,
-                name,
-                color,
-                total,
-                max_hosts};
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 6)) total = Int::fetch(stream);
+        array<string> max_hosts;
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 7)) max_hosts = array<string>::fetch(stream);
+        SeriesMeta_BASE result(std::move(fields_mask),
+                               std::move(time_shift),
+                               std::move(tags),
+                               std::move(what),
+                               std::move(name),
+                               std::move(color),
+                               std::move(total),
+                               std::move(max_hosts));
+        return result;
     }
 
     void store(OutputStream& stream) const
     {
-        MAGIC.store(stream);
+        if constexpr (BOXED) {
+            MAGIC.store(stream);
+        }
         m_fields_mask.store(stream);
         m_time_shift.store(stream);
         m_tags.store(stream);
-        if (IS_SET(m_fields_mask, 1)) m_what.store(stream);
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 4)) t_name::value.store(stream);
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 5)) t_color::value.store(stream);
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 6)) t_total::value.store(stream);
-        if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 7)) t_max_hosts::value.store(stream);
+        if (IS_SET(get_fields_mask(), 1)) m_what->store(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 4)) m_name::value.store(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 5)) m_color::value.store(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 6)) m_total::value.store(stream);
+        if constexpr (IS_SET(QUERY_FIELDS_MASK, 7)) m_max_hosts::value.store(stream);
     }
 
     class Builder
-        : private MAYBE<string::Builder, IS_SET(m_QUERY_FIELDS_MASK, 4), 0>
-        , private MAYBE<string::Builder, IS_SET(m_QUERY_FIELDS_MASK, 5), 1>
-        , private MAYBE<Int::Builder, IS_SET(m_QUERY_FIELDS_MASK, 6), 2>
-        , private MAYBE<Array<string>::Builder, IS_SET(m_QUERY_FIELDS_MASK, 7), 3> {
+        : private MAYBE<string::Builder, IS_SET(QUERY_FIELDS_MASK, 4), utils::commutative(3280544510, 4)>
+        , private MAYBE<string::Builder, IS_SET(QUERY_FIELDS_MASK, 5), utils::commutative(3280544510, 5)>
+        , private MAYBE<Int::Builder, IS_SET(QUERY_FIELDS_MASK, 6), utils::commutative(3280544510, 6)>
+        , private MAYBE<array<string>::Builder, IS_SET(QUERY_FIELDS_MASK, 7), utils::commutative(3280544510, 7)> {
     private:
-        using b_name = MAYBE<string::Builder, IS_SET(m_QUERY_FIELDS_MASK, 4), 0>;
-        using b_color = MAYBE<string::Builder, IS_SET(m_QUERY_FIELDS_MASK, 5), 1>;
-        using b_total = MAYBE<Int::Builder, IS_SET(m_QUERY_FIELDS_MASK, 6), 2>;
-        using b_max_hosts = MAYBE<Array<string>::Builder, IS_SET(m_QUERY_FIELDS_MASK, 7), 3>;
+        using b_name = MAYBE<string::Builder, IS_SET(QUERY_FIELDS_MASK, 4), utils::commutative(3280544510, 4)>;
+        using b_color = MAYBE<string::Builder, IS_SET(QUERY_FIELDS_MASK, 5), utils::commutative(3280544510, 5)>;
+        using b_total = MAYBE<Int::Builder, IS_SET(QUERY_FIELDS_MASK, 6), utils::commutative(3280544510, 6)>;
+        using b_max_hosts = MAYBE<array<string>::Builder, IS_SET(QUERY_FIELDS_MASK, 7), utils::commutative(3280544510, 7)>;
 
     public:
-        friend bool operator==(const Builder& lhs, const SeriesMeta<m_QUERY_FIELDS_MASK>& rhs)
+        using TYPE = SeriesMeta_BASE;
+
+        template <bool RHS_BOXED>
+        friend bool operator==(const Builder& lhs, const SeriesMeta_BASE<RHS_BOXED, QUERY_FIELDS_MASK>& rhs) noexcept
         {
             if (lhs.b_fields_mask != rhs.get_fields_mask())
                 return false;
@@ -374,75 +386,75 @@ public:
             if (lhs.b_tags != rhs.get_tags())
                 return false;
 
-            if (IS_SET(lhs.b_fields_mask, 1) && lhs.b_what != rhs.get_what())
+            if (rhs.get_what() && lhs.b_what != rhs.get_what())
                 return false;
 
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 4))
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 4))
                 if (lhs.b_name::value != rhs.get_name())
                     return false;
 
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 5))
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 5))
                 if (lhs.b_color::value != rhs.get_color())
                     return false;
 
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 6))
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 6))
                 if (lhs.b_total::value != rhs.get_total())
                     return false;
 
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 7))
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 7))
                 if (lhs.b_max_hosts::value != rhs.get_max_hosts())
                     return false;
 
             return true;
         }
 
-        Builder& set_fields_mask(Nat::Builder value) noexcept
+        Builder& set_fields_mask(const Nat::Builder& value) noexcept
         {
             b_fields_mask = value;
             return *this;
         }
 
-        Builder& set_time_shift(Long::Builder value) noexcept
+        Builder& set_time_shift(const Long::Builder& value) noexcept
         {
             b_time_shift = value;
             return *this;
         }
 
-        Builder& set_tags(const Dictionary<string>::Builder& value) noexcept
+        Builder& set_tags(const dictionary<string>::Builder& value) noexcept
         {
             b_tags = value;
             return *this;
         }
 
-        Builder& set_what(Nat::Builder value) noexcept
+        Builder& set_what(const Function::Builder& value) noexcept
         {
             b_what = value;
             return *this;
         }
 
         Builder& set_name(const string::Builder& value) noexcept
-        requires(IS_SET(m_QUERY_FIELDS_MASK, 4))
+        requires(IS_SET(QUERY_FIELDS_MASK, 4))
         {
             b_name::value = value;
             return *this;
         }
 
         Builder& set_color(const string::Builder& value) noexcept
-        requires(IS_SET(m_QUERY_FIELDS_MASK, 5))
+        requires(IS_SET(QUERY_FIELDS_MASK, 5))
         {
             b_color::value = value;
             return *this;
         }
 
         Builder& set_total(Int::Builder value) noexcept
-        requires(IS_SET(m_QUERY_FIELDS_MASK, 6))
+        requires(IS_SET(QUERY_FIELDS_MASK, 6))
         {
             b_total::value = value;
             return *this;
         }
 
-        Builder& set_max_hosts(const Array<string>::Builder& value) noexcept
-        requires(IS_SET(m_QUERY_FIELDS_MASK, 7))
+        Builder& set_max_hosts(const array<string>::Builder& value) noexcept
+        requires(IS_SET(QUERY_FIELDS_MASK, 7))
         {
             b_max_hosts::value = value;
             return *this;
@@ -450,29 +462,104 @@ public:
 
         void store(OutputStream& stream) const
         {
-            MAGIC.store(stream);
+            if constexpr (BOXED) {
+                MAGIC.store(stream);
+            }
             m_fields_mask.store(stream);
             m_time_shift.store(stream);
             m_tags.store(stream);
-            if (IS_SET(m_fields_mask, 1)) m_what.store(stream);
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 4)) b_name::value.store(stream);
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 5)) b_color::value.store(stream);
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 6)) b_total::value.store(stream);
-            if constexpr (IS_SET(m_QUERY_FIELDS_MASK, 7)) b_max_hosts::value.store(stream);
+            if (IS_SET(m_fields_mask, 1)) m_what->store(stream);
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 4)) b_name::value.store(stream);
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 5)) b_color::value.store(stream);
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 6)) b_total::value.store(stream);
+            if constexpr (IS_SET(QUERY_FIELDS_MASK, 7)) b_max_hosts::value.store(stream);
         }
 
     private:
         Nat::Builder b_fields_mask;
         Long::Builder b_time_shift;
-        Dictionary<string>::Builder b_tags;
-        Nat::Builder b_what;
+        dictionary<string>::Builder b_tags;
+        Function::Builder b_what;
     };
 
 private:
+    SeriesMeta_BASE(Nat&& fields_mask,
+                    Long&& time_shift,
+                    dictionary<string>&& tags,
+                    std::optional<Function>&& what,
+                    string&& name,
+                    string&& color,
+                    Int&& total,
+                    array<string>&& max_hosts) noexcept
+        : m_fields_mask(std::move(fields_mask))
+        , m_time_shift(std::move(time_shift))
+        , m_tags(std::move(tags))
+        , m_what(std::move(what))
+        , m_name(std::move(name))
+        , m_color(std::move(color))
+        , m_total(std::move(total))
+        , m_max_hosts(std::move(max_hosts))
+    {}
+
     Nat m_fields_mask;
     Long m_time_shift;
-    Dictionary<string> m_tags;
-    Nat m_what;
+    dictionary<string> m_tags;
+    std::optional<Function> m_what;
 };
+
+using seriesMeta = SeriesMeta_BASE<false>;
+using SeriesMeta = SeriesMeta_BASE<true>;
+
+template <Nat QUERY_FIELDS_MASK>
+using seriesMeta_s = SeriesMeta_BASE<false, QUERY_FIELDS_MASK>;
+template <Nat QUERY_FIELDS_MASK>
+using SeriesMeta_s = SeriesMeta_BASE<true, QUERY_FIELDS_MASK>;
+
+template <bool LHS_BOXED, bool RHS_BOXED>
+bool operator==(const SeriesMeta_BASE<LHS_BOXED>& lhs, const SeriesMeta_BASE<RHS_BOXED>& rhs) noexcept
+{
+    return lhs.get_fields_mask() == rhs.get_fields_mask()
+           && lhs.get_time_shift() == rhs.get_time_shift()
+           && lhs.get_tags() == rhs.get_tags()
+           && lhs.get_what() == rhs.get_what()
+           && lhs.get_name() == rhs.get_name()
+           && lhs.get_color() == rhs.get_color()
+           && lhs.get_total() == rhs.get_total()
+           && lhs.get_max_hosts() == rhs.get_max_hosts();
+}
+
+template <bool LHS_BOXED, bool RHS_BOXED, Nat QUERY_FIELDS_MASK>
+bool operator==(const SeriesMeta_BASE<LHS_BOXED, QUERY_FIELDS_MASK>& lhs, const SeriesMeta_BASE<RHS_BOXED, QUERY_FIELDS_MASK>& rhs) noexcept
+{
+    if (lhs.get_fields_mask() != rhs.get_fields_mask())
+        return false;
+
+    if (lhs.get_time_shift() != rhs.get_time_shift())
+        return false;
+
+    if (lhs.get_tags() != rhs.get_tags())
+        return false;
+
+    if (lhs.get_what() != rhs.get_what())
+        return false;
+
+    if constexpr (IS_SET(QUERY_FIELDS_MASK, 4))
+        if (lhs.get_name() != rhs.get_name())
+            return false;
+
+    if constexpr (IS_SET(QUERY_FIELDS_MASK, 5))
+        if (lhs.get_color() != rhs.get_color())
+            return false;
+
+    if constexpr (IS_SET(QUERY_FIELDS_MASK, 6))
+        if (lhs.get_total() != rhs.get_total())
+            return false;
+
+    if constexpr (IS_SET(QUERY_FIELDS_MASK, 7))
+        if (lhs.get_max_hosts() != rhs.get_max_hosts())
+            return false;
+
+    return true;
+}
 
 }    // namespace baseline::statshouse

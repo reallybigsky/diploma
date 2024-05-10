@@ -11,12 +11,12 @@ namespace opus::inl::simple {
 
 template <bool BOXED>
 class CompoundCTS_BASE
-    : private MAYBE<Magic, BOXED, COMPILE_TIME_CRC32_STR("CompoundCTS")> {
+    : private MAYBE<Magic, BOXED, 2393332885> {
 private:
-    using m_magic = MAYBE<Magic, BOXED, COMPILE_TIME_CRC32_STR("CompoundCTS")>;
+    using m_magic = MAYBE<Magic, BOXED, 2393332885>;
 
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("CompoundCTS");
+    static constexpr Magic MAGIC = 2393332885;
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                        + IntDouble::SIZEOF
                                        + Long::SIZEOF

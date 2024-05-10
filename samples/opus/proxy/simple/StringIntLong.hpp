@@ -9,7 +9,7 @@ namespace opus::proxy::simple {
 template <bool BOXED>
 class StringIntLong_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("StringIntLong");
+    static constexpr Magic MAGIC = 1692638294;
     static constexpr bool STATIC = false;
 
     StringIntLong_BASE() noexcept = default;
@@ -37,12 +37,12 @@ public:
         return m_String1;
     }
 
-    Int get_Int1() const noexcept
+    const Int& get_Int1() const noexcept
     {
         return m_Int1;
     }
 
-    Long get_Long1() const noexcept
+    const Long& get_Long1() const noexcept
     {
         return m_Long1;
     }

@@ -117,9 +117,8 @@ requires(requires(size_t i) { t.size(); t[i]; })
 
 
 constexpr size_t SEED = 777;
+std::default_random_engine DEFAULT_RANDOM_ENGINE(SEED); // NOLINT
 
-// NOLINTNEXTLINE
-std::default_random_engine DEFAULT_RANDOM_ENGINE(SEED);
 
 
 #ifdef BASELINE
@@ -138,42 +137,3 @@ using namespace opus::proxy_naive;
 using namespace opus;
 using namespace opus::proxy;
 #endif
-
-
-//namespace statshouse {
-//
-//template <TLType T>
-//bool operator==(const DictionaryField<T>& lhs, const DictionaryField<T>& rhs)
-//{
-//    return lhs.get_key() == rhs.get_key()
-//           && lhs.get_value() == rhs.get_value();
-//}
-//
-//
-//
-//template <TLType T>
-//bool operator==(const Dictionary<T>& lhs, const Dictionary<T>& rhs)
-//{
-//    return lhs.get_data() == rhs.get_data();
-//}
-//
-//
-//
-//bool operator==(const Metric& lhs, const Metric& rhs)
-//{
-//    return lhs.get_fields_mask() == rhs.get_fields_mask()
-//           && lhs.get_name() == rhs.get_name()
-//           && lhs.get_tags() == rhs.get_tags()
-//           && lhs.get_counter() == rhs.get_counter()
-//           && lhs.get_ts() == rhs.get_ts()
-//           && lhs.get_value() == rhs.get_value()
-//           && lhs.get_unique() == rhs.get_unique();
-//}
-//
-//
-//
-//bool operator==(const AddMetricsBatchQuery& lhs, const AddMetricsBatchQuery& rhs)
-//{
-//    return lhs.get_fields_mask() == rhs.get_fields_mask()
-//           && lhs.get_metrics() == rhs.get_metrics();
-//}

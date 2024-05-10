@@ -16,7 +16,7 @@ TYPED_TEST_SUITE(StringFixture, StringMagic);
 
 TYPED_TEST(StringFixture, Empty)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 1024;
@@ -70,7 +70,7 @@ TYPED_TEST(StringFixture, Empty)
 
 TYPED_TEST(StringFixture, Single)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 1024;
@@ -104,7 +104,7 @@ TYPED_TEST(StringFixture, Single)
 
 TYPED_TEST(StringFixture, Couple)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 1024;
@@ -181,7 +181,7 @@ TYPED_TEST(StringFixture, Couple)
 
 TYPED_TEST(StringFixture, SingleWithOverlap)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 16;
@@ -217,7 +217,7 @@ TYPED_TEST(StringFixture, SingleWithOverlap)
 
 TYPED_TEST(StringFixture, CoupleWithOverlap)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 32;
@@ -281,7 +281,7 @@ TYPED_TEST(StringFixture, CoupleWithOverlap)
 
 TYPED_TEST(StringFixture, Padding)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = TypeParam::value ? 32 : 16;
@@ -298,7 +298,7 @@ TYPED_TEST(StringFixture, Padding)
 
 TYPED_TEST(StringFixture, Random)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
     using Builder = typename StringT::Builder;
 
     const size_t size = 1024;
@@ -337,7 +337,7 @@ TYPED_TEST(StringFixture, Random)
 
 TYPED_TEST(StringFixture, Array)
 {
-    using StringT = ArrayBase<symbol_t, TypeParam::value>;
+    using StringT = ArrayBase<TypeParam::value, symbol_t>;
 
     const size_t size = 256;
     OutputStream os;

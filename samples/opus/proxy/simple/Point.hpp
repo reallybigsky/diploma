@@ -12,7 +12,7 @@ class Point_BASE;
 template <bool BOXED>
 class Point_BASE<BOXED> {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("Point");
+    static constexpr Magic MAGIC = 2850977279;
     static constexpr bool STATIC = false;
 
     Point_BASE() noexcept = default;
@@ -62,9 +62,27 @@ public:
         offset_t PROXY_1_SIZEOF = (IS_SET(mask, 0) ? Long::SIZEOF : 0)
                                   + (IS_SET(mask, 1) ? Long::SIZEOF : 0)
                                   + (IS_SET(mask, 2) ? Long::SIZEOF : 0);
+        offset_t proxy_1_pos = 0;
+        offset_t PROXY_1_LONG1_OFFSET = NO_VALUE;
+        offset_t PROXY_1_LONG2_OFFSET = NO_VALUE;
+        offset_t PROXY_1_LONG3_OFFSET = NO_VALUE;
+        if (IS_SET(mask, 0)) {
+            PROXY_1_LONG1_OFFSET = proxy_1_pos;
+            proxy_1_pos += Long::SIZEOF;
+        }
+        if (IS_SET(mask, 1)) {
+            PROXY_1_LONG2_OFFSET = proxy_1_pos;
+            proxy_1_pos += Long::SIZEOF;
+        }
+        if (IS_SET(mask, 2)) {
+            PROXY_1_LONG3_OFFSET = proxy_1_pos;
+            proxy_1_pos += Long::SIZEOF;
+        }
         Proxy proxy_1 = Proxy::fetch(stream, PROXY_1_SIZEOF);
-        Point_BASE result(std::move(mask),
-                          std::move(PROXY_1_SIZEOF),
+        Point_BASE result(std::move(PROXY_1_SIZEOF),
+                          std::move(PROXY_1_LONG1_OFFSET),
+                          std::move(PROXY_1_LONG2_OFFSET),
+                          std::move(PROXY_1_LONG3_OFFSET),
                           std::move(proxy_1));
         if (!result.verify()) throw TLException(TLException::TYPE::BAD_MAGIC);
         return result;
@@ -132,30 +150,20 @@ public:
         Long::Builder b_z;
     };
 
-
 private:
-    Point_BASE(Nat&& mask,
-               offset_t&& PROXY_1_SIZEOF,
+    Point_BASE(offset_t&& PROXY_1_SIZEOF,
+               offset_t&& PROXY_1_LONG1_OFFSET,
+               offset_t&& PROXY_1_LONG2_OFFSET,
+               offset_t&& PROXY_1_LONG3_OFFSET,
                Proxy&& proxy_1) noexcept
         : PROXY_1_SIZEOF(std::move(PROXY_1_SIZEOF))
+        , PROXY_1_LONG1_OFFSET(std::move(PROXY_1_LONG1_OFFSET))
+        , PROXY_1_LONG2_OFFSET(std::move(PROXY_1_LONG2_OFFSET))
+        , PROXY_1_LONG3_OFFSET(std::move(PROXY_1_LONG3_OFFSET))
         , m_proxy_1(std::move(proxy_1))
-    {
-        offset_t proxy_1_pos = 0;
-        if (IS_SET(mask, 0)) {
-            PROXY_1_LONG1_OFFSET = proxy_1_pos;
-            proxy_1_pos += Long::SIZEOF;
-        }
-        if (IS_SET(mask, 1)) {
-            PROXY_1_LONG2_OFFSET = proxy_1_pos;
-            proxy_1_pos += Long::SIZEOF;
-        }
-        if (IS_SET(mask, 2)) {
-            PROXY_1_LONG3_OFFSET = proxy_1_pos;
-            proxy_1_pos += Long::SIZEOF;
-        }
-    }
+    {}
 
-    offset_t PROXY_1_SIZEOF;
+    offset_t PROXY_1_SIZEOF = 0;
     offset_t PROXY_1_LONG1_OFFSET = NO_VALUE;
     offset_t PROXY_1_LONG2_OFFSET = NO_VALUE;
     offset_t PROXY_1_LONG3_OFFSET = NO_VALUE;
@@ -165,7 +173,7 @@ private:
 template <bool BOXED, Nat MASK>
 class Point_BASE<BOXED, MASK> {
 public:
-    static constexpr Magic MAGIC = utils::commutative(COMPILE_TIME_CRC32_STR("Point"), MASK);
+    static constexpr Magic MAGIC = utils::commutative(2850977279, MASK);
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                        + (IS_SET(MASK, 0) ? Long::SIZEOF : 0)
                                        + (IS_SET(MASK, 1) ? Long::SIZEOF : 0)

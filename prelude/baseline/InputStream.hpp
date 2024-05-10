@@ -2,10 +2,9 @@
 
 #include "prelude/Common.hpp"
 #include "prelude/DataStream.hpp"
+#include "prelude/baseline/Allocator.hpp"
 
 #include <cstring>
-#include <memory>
-#include <vector>
 
 
 
@@ -67,11 +66,11 @@ public:
 
 
     template <Primitive T>
-    std::vector<T> fetchArray()
+    VectorImpl<T> fetchArray()
     {
         const uint32_t size = fetch<uint32_t>();
         const size_t byte_size = sizeof(T) * size;
-        std::vector<T> result(size);
+        VectorImpl<T> result(size);
         for (size_t curr_byte_pos = 0, bytes_to_copy; curr_byte_pos < byte_size; curr_byte_pos += bytes_to_copy) {
             advanceBlockIfFull();
             bytes_to_copy = std::min(m_block->size - m_pos, byte_size - curr_byte_pos);
@@ -86,19 +85,19 @@ public:
 
     template <typename T>
     requires(std::is_same_v<T, symbol_t>)
-    std::vector<symbol_t> fetchArray()
+    VectorImpl<symbol_t> fetchArray()
     {
         return fetchString();
     }
 
 
 
-    std::vector<symbol_t> fetchString()
+    VectorImpl<symbol_t> fetchString()
     {
         advanceBlockIfFull();
 
         size_t size = fetchStringSize();
-        std::vector<symbol_t> result(size);
+        VectorImpl<symbol_t> result(size);
 
         for (size_t curr_byte_pos = 0, bytes_to_copy; curr_byte_pos < size; curr_byte_pos += bytes_to_copy) {
             advanceBlockIfFull();

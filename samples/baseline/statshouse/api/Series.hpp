@@ -1,65 +1,61 @@
 #pragma once
 
-#include "baseline/Includes.hpp"
+#include "prelude/baseline/Includes.hpp"
 
 
 
 namespace baseline::statshouse {
 
-class Series {
+template <bool BOXED>
+class Series_BASE {
 public:
-    static constexpr ACCESS ACCESS_BY = ACCESS::REF;
     static constexpr Magic MAGIC = 689864296;
-    static constexpr bool CTS = false;
+    static constexpr bool STATIC = false;
 
-    Series() noexcept = default;
+    Series_BASE() noexcept = default;
 
-    Series(const Series&) noexcept = default;
-    Series(Series&&) noexcept = default;
-    Series& operator=(const Series&) noexcept = default;
-    Series& operator=(Series&&) noexcept = default;
+    Series_BASE(const Series_BASE&) noexcept = default;
+    Series_BASE(Series_BASE&&) noexcept = default;
+    Series_BASE& operator=(const Series_BASE&) noexcept = default;
+    Series_BASE& operator=(Series_BASE&&) noexcept = default;
 
-    ~Series() noexcept = default;
+    ~Series_BASE() noexcept = default;
 
-    Series(Nat fields_mask,
-           const Array<Array<Double>>& series_data,
-           const Array<Long>& time) noexcept
-        : m_fields_mask(fields_mask)
-        , m_series_data(series_data)
-        , m_time(time)
-    {}
-
-    Nat get_fields_mask() const noexcept
+    const Nat& get_fields_mask() const noexcept
     {
         return m_fields_mask;
     }
 
-    const Array<Array<Double>>& get_series_data() const noexcept
+    const array<array<Double>>& get_series_data() const noexcept
     {
         return m_series_data;
     }
 
-    const Array<Long>& get_time() const noexcept
+    const array<Long>& get_time() const noexcept
     {
         return m_time;
     }
 
-    static Series fetch(InputStream& stream)
+    static Series_BASE fetch(InputStream& stream)
     {
-        Magic magic = Magic::fetch(stream);
-        if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
-
+        if constexpr (BOXED) {
+            Magic magic = Magic::fetch(stream);
+            if (magic != MAGIC) throw TLException(TLException::TYPE::BAD_MAGIC);
+        }
         Nat fields_mask = Nat::fetch(stream);
-        Array<Array<Double>> series_data = Array<Array<Double>>::fetch(stream);
-        Array<Long> time = Array<Long>::fetch(stream);
-        return {fields_mask,
-                series_data,
-                time};
+        array<array<Double>> series_data = array<array<Double>>::fetch(stream);
+        array<Long> time = array<Long>::fetch(stream);
+        Series_BASE result(std::move(fields_mask),
+                           std::move(series_data),
+                           std::move(time));
+        return result;
     }
 
     void store(OutputStream& stream) const
     {
-        MAGIC.store(stream);
+        if constexpr (BOXED) {
+            MAGIC.store(stream);
+        }
         m_fields_mask.store(stream);
         m_series_data.store(stream);
         m_time.store(stream);
@@ -67,26 +63,38 @@ public:
 
     class Builder {
     public:
-        friend bool operator==(const Builder& lhs, const Series& rhs)
+        using TYPE = Series_BASE;
+
+        template <bool RHS_BOXED>
+        friend bool operator==(const Builder& lhs, const Series_BASE<RHS_BOXED>& rhs) noexcept
         {
             return lhs.b_fields_mask == rhs.get_fields_mask()
                    && lhs.b_series_data == rhs.get_series_data()
                    && lhs.b_time == rhs.get_time();
         }
 
-        Builder& set_fields_mask(Nat::Builder value) noexcept
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3>
+        static Builder random(std::default_random_engine& engine) noexcept
+        {
+            return Builder {}
+                    .set_fields_mask(Nat::Builder::random(engine))
+                    .set_series_data(array<array<Double>>::Builder::random<SIZE_1, SIZE_2>(engine))
+                    .set_time(array<Long>::Builder::random<SIZE_3>(engine));
+        }
+
+        Builder& set_fields_mask(const Nat::Builder& value) noexcept
         {
             b_fields_mask = value;
             return *this;
         }
 
-        Builder& set_series_data(const Array<Array<Double>>::Builder& value) noexcept
+        Builder& set_series_data(const array<array<Double>>::Builder& value) noexcept
         {
             b_series_data = value;
             return *this;
         }
 
-        Builder& set_time(const Array<Long>::Builder& value) noexcept
+        Builder& set_time(const array<Long>::Builder& value) noexcept
         {
             b_time = value;
             return *this;
@@ -94,7 +102,9 @@ public:
 
         void store(OutputStream& stream) const
         {
-            MAGIC.store(stream);
+            if constexpr (BOXED) {
+                MAGIC.store(stream);
+            }
             b_fields_mask.store(stream);
             b_series_data.store(stream);
             b_time.store(stream);
@@ -102,14 +112,33 @@ public:
 
     private:
         Nat::Builder b_fields_mask;
-        Array<Array<Double>>::Builder b_series_data;
-        Array<Long>::Builder b_time;
+        array<array<Double>>::Builder b_series_data;
+        array<Long>::Builder b_time;
     };
 
 private:
+    Series_BASE(Nat&& fields_mask,
+                array<array<Double>>&& series_data,
+                array<Long>&& time) noexcept
+        : m_fields_mask(std::move(fields_mask))
+        , m_series_data(std::move(series_data))
+        , m_time(std::move(time))
+    {}
+
     Nat m_fields_mask;
-    Array<Array<Double>> m_series_data;
-    Array<Long> m_time;
+    array<array<Double>> m_series_data;
+    array<Long> m_time;
 };
+
+using series = Series_BASE<false>;
+using Series = Series_BASE<true>;
+
+template <bool LHS_BOXED, bool RHS_BOXED>
+bool operator==(const Series_BASE<LHS_BOXED>& lhs, const Series_BASE<RHS_BOXED>& rhs) noexcept
+{
+    return lhs.get_fields_mask() == rhs.get_fields_mask()
+           && lhs.get_series_data() == rhs.get_series_data()
+           && lhs.get_time() == rhs.get_time();
+}
 
 }    // namespace baseline::statshouse

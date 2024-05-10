@@ -12,7 +12,7 @@ namespace opus::proxy_naive::simple {
 template <bool BOXED>
 class CompoundCTS_BASE {
 public:
-    static constexpr Magic MAGIC = COMPILE_TIME_CRC32_STR("CompoundCTS");
+    static constexpr Magic MAGIC = 2393332885;
     static constexpr offset_t SIZEOF = (BOXED ? Magic::SIZEOF : 0)
                                      + IntDouble::SIZEOF
                                      + Long::SIZEOF
