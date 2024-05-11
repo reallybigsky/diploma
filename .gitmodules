@@ -1,3 +1,6 @@
 [submodule "lib/fuzztest"]
 	path = lib/fuzztest
 	url = git@github.com:reallybigsky/fuzztest.git
+[submodule "lib/MemoryPool"]
+	path = lib/MemoryPool
+	url = git@github.com:reallybigsky/MemoryPool.git
