@@ -9,6 +9,16 @@ static_assert(simple::compoundRTS::MAGIC != 0);
 template <typename T>
 class CompoundRTSFixture : public testing::Test {
 public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+
     static constexpr size_t ARRAY_INT_SIZE = 100;
     static constexpr size_t STRING1_SIZE = 512;
     static constexpr size_t STRINGINTLONG_SIZE = 512;
@@ -139,7 +149,8 @@ TYPED_TEST(CompoundRTSFixture, SingleWithOverlap)
                                                TestFixture::STRING1_SIZE,
                                                TestFixture::STRINGINTLONG_SIZE,
                                                TestFixture::STRING2_SIZE,
-                                               TestFixture::ARRAY_INTDOUBLELONG_SIZE>(DEFAULT_RANDOM_ENGINE);;
+                                               TestFixture::ARRAY_INTDOUBLELONG_SIZE>(DEFAULT_RANDOM_ENGINE);
+    ;
     builder.store(os);
 
     CompoundRTST result = CompoundRTST::fetch(is);
@@ -323,6 +334,7 @@ TYPED_TEST(CompoundRTSFixture, Array)
 
 TEST(CompoundRTS, WrongMagic)
 {
+    Allocator::startScope();
     const size_t size = 1024;
     DataStream::Block block = createBlock(size);
     OutputStream os = {block};
@@ -332,4 +344,5 @@ TEST(CompoundRTS, WrongMagic)
     builder.store(os);
 
     ASSERT_THROW(simple::CompoundRTS::fetch(is), TLException);
+    Allocator::endScope();
 }

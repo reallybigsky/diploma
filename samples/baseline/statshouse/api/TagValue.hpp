@@ -165,4 +165,15 @@ bool operator==(const TagValue_BASE<LHS_BOXED>& lhs, const TagValue_BASE<RHS_BOX
            && lhs.get_flag() == rhs.get_flag();
 }
 
+template <bool BOXED>
+size_t consume(const TagValue_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_in());
+    result += consume(value.get_value());
+    result += consume(value.get_flag());
+    return result;
+}
+
 }    // namespace baseline::statshouse

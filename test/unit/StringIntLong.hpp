@@ -7,7 +7,18 @@ static_assert(simple::StringIntLong::MAGIC != 0);
 
 
 template <typename T>
-class StringIntLongFixture : public testing::Test {};
+class StringIntLongFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using StringIntLongMagic = ::testing::Types<std::true_type, std::false_type>;
 TYPED_TEST_SUITE(StringIntLongFixture, StringIntLongMagic);
@@ -265,6 +276,7 @@ TYPED_TEST(StringIntLongFixture, Array)
 
 TEST(StringIntLong, WrongMagic)
 {
+    Allocator::startScope();
     const size_t size = 1024;
     DataStream::Block block = createBlock(size);
     OutputStream os = {block};
@@ -274,4 +286,5 @@ TEST(StringIntLong, WrongMagic)
     builder.store(os);
 
     ASSERT_THROW(simple::StringIntLong::fetch(is), TLException);
+    Allocator::endScope();
 }

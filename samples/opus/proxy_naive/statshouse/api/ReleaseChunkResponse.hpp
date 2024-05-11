@@ -111,4 +111,12 @@ bool operator==(const ReleaseChunkResponse& lhs, const ReleaseChunkResponse& rhs
            && lhs.get_releasedChunkCount() == rhs.get_releasedChunkCount();
 }
 
+size_t consume(const ReleaseChunkResponse& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_releasedChunkCount());
+    return result;
+}
+
 }    // namespace opus::proxy_naive::statshouse

@@ -63,12 +63,12 @@ public:
                    && lhs.b_metrics == rhs.get_metrics();
         }
 
-        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
                     .set_fields_mask(Nat::Builder::random(engine))
-                    .set_metrics(array<Metric>::Builder::random<SIZE_1, SIZE_2, SIZE_3, SIZE_4, SIZE_5, SIZE_6>(engine));
+                    .set_metrics(array<metric>::Builder::random<SIZE_1, SIZE_2, SIZE_3, SIZE_4, SIZE_5, SIZE_6, SIZE_7>(engine));
         }
 
         Builder& set_fields_mask(const Nat::Builder& value) noexcept
@@ -113,6 +113,14 @@ bool operator==(const AddMetricsBatchQuery& lhs, const AddMetricsBatchQuery& rhs
 {
     return lhs.get_fields_mask() == rhs.get_fields_mask()
            && lhs.get_metrics() == rhs.get_metrics();
+}
+
+size_t consume(const AddMetricsBatchQuery& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_metrics());
+    return result;
 }
 
 }    // namespace opus::proxy_naive::statshouse

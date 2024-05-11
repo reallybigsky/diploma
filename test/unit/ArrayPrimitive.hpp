@@ -12,7 +12,16 @@ static_assert(Array<Double>::MAGIC != 0);
 
 
 template <typename T>
-class ArrayPrimitive : public testing::Test {};
+class ArrayPrimitive : public testing::Test {
+public:
+    void SetUp() override {
+        Allocator::startScope();
+    }
+
+    void TearDown() override {
+        Allocator::endScope();
+    }
+};
 
 using Primitives = ::testing::Types<int, float, long, double>;
 TYPED_TEST_SUITE(ArrayPrimitive, Primitives);

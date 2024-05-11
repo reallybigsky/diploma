@@ -284,7 +284,7 @@ private:
     Nat m_fields_mask;
     Proxy m_proxy_1;
     dictionary<string> m_tags;
-    offset_t PROXY_2_SIZEOF= 0;
+    offset_t PROXY_2_SIZEOF = 0;
     offset_t PROXY_2_WHAT_OFFSET = NO_VALUE;
     Proxy m_proxy_2;
     std::optional<string> m_name;
@@ -645,6 +645,21 @@ bool operator==(const SeriesMeta_BASE<LHS_BOXED, QUERY_FIELDS_MASK>& lhs, const 
             return false;
 
     return true;
+}
+
+template <bool BOXED>
+size_t consume(const SeriesMeta_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_time_shift());
+    result += consume(value.get_tags());
+    if (value.get_what()) result += consume(*value.get_what());
+    if (value.get_name()) result += consume(*value.get_name());
+    if (value.get_color()) result += consume(*value.get_color());
+    if (value.get_total()) result += consume(*value.get_total());
+    if (value.get_max_hosts()) result += consume(*value.get_max_hosts());
+    return result;
 }
 
 }    // namespace opus::proxy_naive::statshouse

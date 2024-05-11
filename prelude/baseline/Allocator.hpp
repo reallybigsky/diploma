@@ -12,22 +12,29 @@ size_t total_allocations = 0;
 size_t total_bytes_allocated = 0;
 }    // namespace stats
 
-template <typename T>
 class Allocator {
+public:
+    static void startScope() {}
+
+    static void endScope() {}
+};
+
+template <typename T>
+class VectorAllocator {
 public:
     using value_type = T;
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
     using propagate_on_container_move_assignment = std::true_type;
 
-    Allocator() noexcept = default;
+    VectorAllocator() noexcept = default;
 
-    Allocator(const Allocator&) noexcept = default;
-    Allocator(Allocator&&) noexcept = default;
-    Allocator& operator=(const Allocator&) noexcept = default;
-    Allocator& operator=(Allocator&&) noexcept = default;
+    VectorAllocator(const VectorAllocator&) noexcept = default;
+    VectorAllocator(VectorAllocator&&) noexcept = default;
+    VectorAllocator& operator=(const VectorAllocator&) noexcept = default;
+    VectorAllocator& operator=(VectorAllocator&&) noexcept = default;
 
-    ~Allocator() noexcept = default;
+    ~VectorAllocator() noexcept = default;
 
     [[nodiscard]] constexpr T* allocate(std::size_t n)
     {
@@ -46,6 +53,6 @@ private:
 };
 
 template <typename T>
-using VectorImpl = std::vector<T, Allocator<T>>;
+using VectorImpl = std::vector<T, VectorAllocator<T>>;
 
 }    // namespace baseline

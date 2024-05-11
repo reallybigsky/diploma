@@ -47,7 +47,7 @@ public:
     {
         uintptr_t* table = m_proxy.table();
         uintptr_t* currEntry = m_proxy.table();
-        for (size_t i = 0; idx >= table[i]; i += 2) {
+        for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
         }
@@ -168,7 +168,7 @@ public:
             , i_inner_pos(0)
             , i_entry(arr.m_proxy.table())
         {
-            if (arr.size() == 0)
+            if (arr.size() == 0) [[unlikely]]
                 *this = Iterator();
         }
 
@@ -186,12 +186,12 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) {
+            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
                 *this = Iterator();
                 return *this;
             }
 
-            if (++i_inner_pos == i_entry[0]) {
+            if (++i_inner_pos == i_entry[0]) [[unlikely]] {
                 i_inner_pos = 0;
                 i_entry += 2;
             }
@@ -255,12 +255,12 @@ public:
     {
         uintptr_t* table = m_proxy.table();
         uintptr_t* currEntry = m_proxy.table();
-        for (size_t i = 0; idx >= table[i]; i += 2) {
+        for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
         }
 
-        if (currEntry[0] == 1)
+        if (currEntry[0] == 1) [[unlikely]]
             return *(T*)(&currEntry[1]);
 
         return ((T*)currEntry[1])[idx];
@@ -401,7 +401,7 @@ public:
             , i_inner_pos(0)
             , i_entry(arr.m_proxy.table())
         {
-            if (arr.size() == 0)
+            if (arr.size() == 0) [[unlikely]]
                 *this = Iterator();
         }
 
@@ -409,7 +409,7 @@ public:
 
         reference operator*() const noexcept
         {
-            if (i_entry[0] == 1)
+            if (i_entry[0] == 1) [[unlikely]]
                 return *(value_type*)(&i_entry[1]);
 
             return ((value_type*)i_entry[1])[i_inner_pos];
@@ -417,7 +417,7 @@ public:
 
         pointer operator->() const noexcept
         {
-            if (i_entry[0] == 1)
+            if (i_entry[0] == 1) [[unlikely]]
                 return (value_type*)(&i_entry[1]);
 
             return ((value_type*)i_entry[1]) + i_inner_pos;
@@ -425,12 +425,12 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) {
+            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
                 *this = Iterator();
                 return *this;
             }
 
-            if (++i_inner_pos == i_entry[0]) {
+            if (++i_inner_pos == i_entry[0]) [[unlikely]] {
                 i_inner_pos = 0;
                 i_entry += 2;
             }
@@ -506,12 +506,12 @@ public:
     {
         uintptr_t* table = m_proxy.table();
         uintptr_t* currEntry = m_proxy.table();
-        for (size_t i = 0; idx >= table[i]; i += 2) {
+        for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
         }
 
-        if (currEntry[0] == 1 && IS_SHARED(currEntry[1])) {
+        if (currEntry[0] == 1 && IS_SHARED(currEntry[1])) [[unlikely]] {
             T t = *(T*)GET_PTR(currEntry[1]);
             return t;
         }
@@ -645,7 +645,7 @@ public:
             , i_inner_pos(0)
             , i_entry(arr.m_proxy.table())
         {
-            if (arr.size() == 0)
+            if (arr.size() == 0) [[unlikely]]
                 *this = Iterator();
         }
 
@@ -653,7 +653,7 @@ public:
 
         reference operator*() const noexcept
         {
-            if (i_entry[0] == 1 && IS_SHARED(i_entry[1]))
+            if (i_entry[0] == 1 && IS_SHARED(i_entry[1])) [[unlikely]]
                 return *(T*)GET_PTR(i_entry[1]);
 
             Proxy proxy(nullptr, (uint8_t*)i_entry[1] + T::SIZEOF * i_inner_pos);
@@ -672,12 +672,12 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) {
+            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
                 *this = Iterator();
                 return *this;
             }
 
-            if (++i_inner_pos == i_entry[0]) {
+            if (++i_inner_pos == i_entry[0]) [[unlikely]] {
                 i_inner_pos = 0;
                 i_entry += 2;
             }
@@ -895,7 +895,7 @@ public:
             : i_arr(arr)
             , i_pos(0)
         {
-            if (arr.size() == 0)
+            if (arr.size() == 0) [[unlikely]]
                 *this = Iterator();
         }
 
@@ -913,7 +913,7 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_pos == i_arr.size()) {
+            if (++i_pos == i_arr.size()) [[unlikely]] {
                 *this = Iterator();
                 return *this;
             }
@@ -999,6 +999,46 @@ bool operator==(const ArrayBase<BOXED, T>& lhs, const std::vector<U>& rhs)
     }
 
     return true;
+}
+
+
+
+template <bool BOXED>
+size_t consume(const ArrayBase<BOXED, symbol_t>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += it;
+    }
+    return result;
+}
+
+
+
+template <bool BOXED, Primitive T>
+size_t consume(const ArrayBase<BOXED, Scalar<T>>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += it;
+    }
+    return result;
+}
+
+
+
+template <bool BOXED, TLType T>
+requires(!Primitive<T> && !std::is_same_v<T, symbol_t>)
+size_t consume(const ArrayBase<BOXED, T>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += consume(it);
+    }
+//    for (size_t i = 0; i < value.size(); ++i) {
+//        result += consume(value[i]);
+//    }
+    return result;
 }
 
 }    // namespace opus

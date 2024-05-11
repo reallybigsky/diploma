@@ -9,7 +9,16 @@ static_assert(simple::CompoundCTS::SIZEOF == 48);
 
 
 template <typename T>
-class CompoundCTSFixture : public testing::Test {};
+class CompoundCTSFixture : public testing::Test {
+public:
+    void SetUp() override {
+        Allocator::startScope();
+    }
+
+    void TearDown() override {
+        Allocator::endScope();
+    }
+};
 
 using CompoundCTSMagic = ::testing::Types<std::true_type, std::false_type>;
 TYPED_TEST_SUITE(CompoundCTSFixture, CompoundCTSMagic);
@@ -459,6 +468,7 @@ TYPED_TEST(CompoundCTSFixture, ArrayMagic)
 
 TEST(CompoundCTS, WrongMagic)
 {
+    Allocator::startScope();
     const size_t size = 1024;
     DataStream::Block block = createBlock(size);
     OutputStream os = {block};
@@ -468,4 +478,5 @@ TEST(CompoundCTS, WrongMagic)
     builder.store(os);
 
     ASSERT_THROW(simple::CompoundCTS::fetch(is), TLException);
+    Allocator::endScope();
 }

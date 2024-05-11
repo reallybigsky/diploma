@@ -235,4 +235,18 @@ bool operator==(const Metric_BASE<LHS_BOXED>& lhs, const Metric_BASE<RHS_BOXED>&
            && lhs.get_unique() == rhs.get_unique();
 }
 
+template <bool BOXED>
+size_t consume(const Metric_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_name());
+    result += consume(value.get_tags());
+    if (value.get_counter()) result += consume(*value.get_counter());
+    if (value.get_ts()) result += consume(*value.get_ts());
+    if (value.get_value()) result += consume(*value.get_value());
+    if (value.get_unique()) result += consume(*value.get_unique());
+    return result;
+}
+
 }    // namespace opus::inl::statshouse

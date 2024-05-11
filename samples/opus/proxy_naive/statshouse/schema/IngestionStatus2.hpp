@@ -152,4 +152,14 @@ bool operator==(const IngestionStatus2_BASE<LHS_BOXED>& lhs, const IngestionStat
            && lhs.get_value() == rhs.get_value();
 }
 
+template <bool BOXED>
+size_t consume(const IngestionStatus2_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_env());
+    result += consume(value.get_metric());
+    result += consume(value.get_value());
+    return result;
+}
+
 }    // namespace opus::proxy_naive::statshouse

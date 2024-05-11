@@ -143,4 +143,13 @@ bool operator==(const GetChunkResponse& lhs, const GetChunkResponse& rhs) noexce
            && lhs.get_index() == rhs.get_index();
 }
 
+size_t consume(const GetChunkResponse& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_series());
+    result += consume(value.get_index());
+    return result;
+}
+
 }    // namespace opus::proxy_naive::statshouse

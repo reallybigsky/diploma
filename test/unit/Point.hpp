@@ -27,6 +27,16 @@ static_assert(simple::Point_s<7>::SIZEOF == 28);
 template <typename T>
 class PointFixture : public testing::Test {
 public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+
     static constexpr size_t MASK_MIN = 0;
     static constexpr size_t MASK_MAX = 8;
 };
@@ -37,7 +47,18 @@ TYPED_TEST_SUITE(PointFixture, PointMagic);
 
 
 template <typename T>
-class PointStaticMaskFixture : public testing::Test {};
+class PointStaticMaskFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using PointStaticMask = ::testing::Types<std::integral_constant<uint32_t, 0>,
                                          std::integral_constant<uint32_t, 1>,

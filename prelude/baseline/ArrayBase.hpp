@@ -540,4 +540,41 @@ bool operator==(const ArrayBase<BOXED, T>& lhs, const std::vector<U, A>& rhs)
     return true;
 }
 
+
+
+template <bool BOXED>
+size_t consume(const ArrayBase<BOXED, symbol_t>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += it;
+    }
+    return result;
+}
+
+
+
+template <bool BOXED, Primitive T>
+size_t consume(const ArrayBase<BOXED, Scalar<T>>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += it;
+    }
+    return result;
+}
+
+
+
+template <bool BOXED, TLType T>
+requires(!Primitive<T> && !std::is_same_v<T, symbol_t>)
+size_t consume(const ArrayBase<BOXED, T>& value) noexcept
+{
+    size_t result = 0;
+    for (const auto& it : value) {
+        result += consume(it);
+    }
+    return result;
+}
+
 }    // namespace baseline

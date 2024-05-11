@@ -7,7 +7,18 @@ static_assert(String::MAGIC != 0);
 
 
 template <typename T>
-class StringFixture : public testing::Test {};
+class StringFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using StringMagic = ::testing::Types<std::true_type, std::false_type>;
 TYPED_TEST_SUITE(StringFixture, StringMagic);
@@ -382,6 +393,7 @@ TYPED_TEST(StringFixture, Array)
 
 TEST(String, WrongMagic)
 {
+    Allocator::startScope();
     const size_t size = 1024;
     DataStream::Block block = createBlock(size);
     OutputStream os = {block};
@@ -391,4 +403,5 @@ TEST(String, WrongMagic)
     wrong_magic.store(os);
 
     ASSERT_THROW(String::fetch(is), TLException);
+    Allocator::endScope();
 }

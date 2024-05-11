@@ -191,3 +191,11 @@ public:
 
     T value = {};
 };
+
+
+
+template <Primitive T>
+size_t consume(Scalar<T> s) noexcept
+{
+    return s.value;
+}

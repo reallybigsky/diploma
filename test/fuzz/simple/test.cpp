@@ -259,6 +259,7 @@ public:
 
     void storeFetch(bool magic, const SimpleVariant& input)
     {
+        Allocator::startScope();
         checkBlockStreamSize();
         std::visit([&](auto&& arg) {
             if (magic) {
@@ -268,11 +269,12 @@ public:
             }
         },
                    input);
+        Allocator::endScope();
     }
 
     template <bool MAGIC, typename ARG>
     void doStoreFetch(ARG&& arg)
-    requires(!requires { std::decay_t<ARG>::MAX_MASK_VALUE; })
+    requires(!requires { std::decay_t<ARG>::MIN_MASK_VALUE; std::decay_t<ARG>::MAX_MASK_VALUE; })
     {
         auto builder = arg.template toBuilder<true>();
         using TL_TYPE = std::decay_t<decltype(builder)>::TYPE;

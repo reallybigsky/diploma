@@ -82,4 +82,11 @@ bool operator==(const True_BASE<LHS_BOXED>&, const True_BASE<RHS_BOXED>&) noexce
     return true;
 }
 
+template <bool BOXED>
+size_t consume(const True_BASE<BOXED>&) noexcept
+{
+    size_t result = 0;
+    return result;
+}
+
 }    // namespace baseline::statshouse

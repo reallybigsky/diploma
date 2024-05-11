@@ -72,13 +72,13 @@ public:
                    && lhs.b_meta == rhs.get_meta();
         }
 
-        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
                     .set_fields_mask(Nat::Builder::random(engine))
                     .set_data(array<Double>::Builder::random<SIZE_1>(engine))
-                    .set_meta(array<pointMeta>::Builder::random<SIZE_2, SIZE_3, SIZE_4>(engine));
+                    .set_meta(array<pointMeta>::Builder::random<SIZE_2, SIZE_3, SIZE_4, SIZE_5>(engine));
         }
 
         Builder& set_fields_mask(const Nat::Builder& value) noexcept
@@ -132,6 +132,15 @@ bool operator==(const GetQueryPointResponse& lhs, const GetQueryPointResponse& r
     return lhs.get_fields_mask() == rhs.get_fields_mask()
            && lhs.get_data() == rhs.get_data()
            && lhs.get_meta() == rhs.get_meta();
+}
+
+size_t consume(const GetQueryPointResponse& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_data());
+    result += consume(value.get_meta());
+    return result;
 }
 
 }    // namespace opus::proxy::statshouse

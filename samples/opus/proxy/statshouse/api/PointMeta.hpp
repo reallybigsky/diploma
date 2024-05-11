@@ -228,4 +228,17 @@ bool operator==(const PointMeta_BASE<LHS_BOXED>& lhs, const PointMeta_BASE<RHS_B
            && lhs.get_what() == rhs.get_what();
 }
 
+template <bool BOXED>
+size_t consume(const PointMeta_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_time_shift());
+    result += consume(value.get_from());
+    result += consume(value.get_to());
+    result += consume(value.get_tags());
+    if (value.get_what()) result += consume(*value.get_what());
+    return result;
+}
+
 }    // namespace opus::proxy::statshouse

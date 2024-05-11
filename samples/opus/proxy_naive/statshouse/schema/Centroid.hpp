@@ -131,4 +131,13 @@ bool operator==(const Centroid_BASE<LHS_BOXED>& lhs, const Centroid_BASE<RHS_BOX
            && lhs.get_weight() == rhs.get_weight();
 }
 
+template <bool BOXED>
+size_t consume(const Centroid_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_value());
+    result += consume(value.get_weight());
+    return result;
+}
+
 }    // namespace opus::proxy_naive::statshouse

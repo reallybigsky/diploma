@@ -160,4 +160,11 @@ private:
     {}
 };
 
-}    // namespace opus::proxy_naive::statshouse
+size_t consume(const Function& value) noexcept
+{
+    size_t result = 0;
+    result += value.get();
+    return result;
+}
+
+}    // namespace opus::proxy::statshouse

@@ -150,4 +150,14 @@ bool operator==(const Series_BASE<LHS_BOXED>& lhs, const Series_BASE<RHS_BOXED>&
            && lhs.get_time() == rhs.get_time();
 }
 
+template <bool BOXED>
+size_t consume(const Series_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_series_data());
+    result += consume(value.get_time());
+    return result;
+}
+
 }    // namespace opus::proxy::statshouse

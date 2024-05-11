@@ -9,7 +9,18 @@ static_assert(simple::IntDoubleLong::SIZEOF == 24);
 
 
 template <typename T>
-class IntDoubleLongFixture : public testing::Test {};
+class IntDoubleLongFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using IntDoubleLongMagic = ::testing::Types<std::true_type, std::false_type>;
 TYPED_TEST_SUITE(IntDoubleLongFixture, IntDoubleLongMagic);
@@ -364,6 +375,7 @@ TYPED_TEST(IntDoubleLongFixture, ArrayMagic)
 
 TEST(IntDoubleLong, WrongMagic)
 {
+    Allocator::startScope();
     const size_t size = 1024;
     DataStream::Block block = createBlock(size);
     OutputStream os = {block};
@@ -373,4 +385,5 @@ TEST(IntDoubleLong, WrongMagic)
     builder.store(os);
 
     ASSERT_THROW(simple::IntDoubleLong::fetch(is), TLException);
+    Allocator::endScope();
 }

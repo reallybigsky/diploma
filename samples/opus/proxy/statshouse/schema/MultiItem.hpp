@@ -120,7 +120,7 @@ public:
                    && (!rhs.get_top() || lhs.b_top == rhs.get_top());
         }
 
-        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
@@ -129,7 +129,7 @@ public:
                     .set_keys(array<Int>::Builder::random<SIZE_1>(engine))
                     .set_t(Nat::Builder::random(engine))
                     .set_tail(multiValue::Builder::random<SIZE_2, SIZE_3>(engine))
-                    .set_top(array<topElement>::Builder::random<SIZE_4, SIZE_5, SIZE_6>(engine));
+                    .set_top(array<topElement>::Builder::random<SIZE_4, SIZE_5, SIZE_6, SIZE_7>(engine));
         }
 
         Builder& set_fields_mask(const Nat::Builder& value) noexcept
@@ -190,7 +190,6 @@ public:
         array<topElement>::Builder b_top;
     };
 
-
 private:
     MultiItem_BASE(Nat&& fields_mask,
                    Int&& metric,
@@ -226,6 +225,19 @@ bool operator==(const MultiItem_BASE<LHS_BOXED>& lhs, const MultiItem_BASE<RHS_B
            && lhs.get_t() == rhs.get_t()
            && lhs.get_tail() == rhs.get_tail()
            && lhs.get_top() == rhs.get_top();
+}
+
+template <bool BOXED>
+size_t consume(const MultiItem_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_metric());
+    result += consume(value.get_keys());
+    if (value.get_t()) result += consume(*value.get_t());
+    result += consume(value.get_tail());
+    if (value.get_top()) result += consume(*value.get_top());
+    return result;
 }
 
 }    // namespace opus::proxy::statshouse

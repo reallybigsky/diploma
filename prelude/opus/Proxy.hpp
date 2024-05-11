@@ -302,14 +302,22 @@ public:
 
     uint8_t* data() const noexcept
     {
-        return m_data ? (uint8_t*)m_data->p_data : nullptr;
+        if (!m_data) [[unlikely]]
+            return nullptr;
+
+        return (uint8_t*)m_data->p_data;
+//        return m_data ? (uint8_t*)m_data->p_data : nullptr;
     }
 
 
 
     uintptr_t* table() const noexcept
     {
-        return m_data ? m_data->p_data : nullptr;
+        if (!m_data) [[unlikely]]
+            return nullptr;
+
+        return m_data->p_data;
+//        return m_data ? m_data->p_data : nullptr;
     }
 
 private:

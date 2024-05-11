@@ -7,7 +7,18 @@ static_assert(simple::StringIntLong::MAGIC != 0);
 
 
 template <typename T>
-class PictureFixture : public testing::Test {};
+class PictureFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using PictureMagic = ::testing::Types<std::true_type, std::false_type>;
 TYPED_TEST_SUITE(PictureFixture, PictureMagic);

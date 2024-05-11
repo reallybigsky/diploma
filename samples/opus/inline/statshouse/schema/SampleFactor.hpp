@@ -150,4 +150,13 @@ bool operator==(const SampleFactor_BASE<LHS_BOXED>& lhs, const SampleFactor_BASE
            && lhs.get_value() == rhs.get_value();
 }
 
+template <bool BOXED>
+size_t consume(const SampleFactor_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_metric());
+    result += consume(value.get_value());
+    return result;
+}
+
 }    // namespace opus::inl::statshouse

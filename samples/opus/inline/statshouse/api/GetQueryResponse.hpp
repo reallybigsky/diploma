@@ -260,4 +260,20 @@ bool operator==(const GetQueryResponse& lhs, const GetQueryResponse& rhs) noexce
            && lhs.get_excess_point_right() == rhs.get_excess_point_right();
 }
 
+size_t consume(const GetQueryResponse& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_query_fields_mask());
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_series());
+    result += consume(value.get_series_meta());
+    result += consume(value.get_chunk_ids());
+    result += consume(value.get_total_time_points());
+    result += consume(value.get_response_id());
+    if (value.get_excess_point_left()) result += consume(*value.get_excess_point_left());
+    if (value.get_excess_point_right()) result += consume(*value.get_excess_point_right());
+    return result;
+}
+
+
 }    // namespace opus::inl::statshouse

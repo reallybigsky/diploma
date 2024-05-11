@@ -147,7 +147,7 @@ public:
                    && (!rhs.get_what() || lhs.b_what == rhs.get_what());
         }
 
-        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7, size_t SIZE_8, size_t SIZE_9, size_t SIZE_10, size_t SIZE_11>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7, size_t SIZE_8, size_t SIZE_9, size_t SIZE_10>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
@@ -160,8 +160,8 @@ public:
                     .set_interval(string::Builder::random<SIZE_2>(engine))
                     .set_function(Function::Builder::random(engine))
                     .set_group_by(array<string>::Builder::random<SIZE_3, SIZE_4>(engine))
-                    .set_filters(array<filter>::Builder::random<SIZE_5, SIZE_6, SIZE_6>(engine))
-                    .set_time_shift(array<Long>::Builder::random<SIZE_8>(engine))
+                    .set_filters(array<filter>::Builder::random<SIZE_5, SIZE_6, SIZE_7, SIZE_8>(engine))
+                    .set_time_shift(array<Long>::Builder::random<SIZE_9>(engine))
                     .set_what(array<Function>::Builder::random<SIZE_10>(engine));
         }
 
@@ -324,6 +324,24 @@ bool operator==(const QueryPoint& lhs, const QueryPoint& rhs) noexcept
            && lhs.get_filters() == rhs.get_filters()
            && lhs.get_time_shift() == rhs.get_time_shift()
            && lhs.get_what() == rhs.get_what();
+}
+
+size_t consume(const QueryPoint& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_version());
+    result += consume(value.get_top_n());
+    result += consume(value.get_metric_name());
+    result += consume(value.get_time_from());
+    result += consume(value.get_time_to());
+    result += consume(value.get_interval());
+    result += consume(value.get_function());
+    result += consume(value.get_group_by());
+    result += consume(value.get_filters());
+    result += consume(value.get_time_shift());
+    if (value.get_what()) result += consume(*value.get_what());
+    return result;
 }
 
 }    // namespace opus::inl::statshouse

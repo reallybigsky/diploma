@@ -184,9 +184,9 @@ public:
                     .set_value_sum_square(Double::Builder::random(engine))
                     .set_uniques(string::Builder::random<SIZE_1>(engine))
                     .set_centroids(array<centroid>::Builder::random<SIZE_2>(engine))
-                    .set_max_host_tag(Double::Builder::random(engine))
-                    .set_min_host_tag(Double::Builder::random(engine))
-                    .set_max_counter_host_tag(Double::Builder::random(engine));
+                    .set_max_host_tag(Int::Builder::random(engine))
+                    .set_min_host_tag(Int::Builder::random(engine))
+                    .set_max_counter_host_tag(Int::Builder::random(engine));
         }
 
         Builder& set_counter(const Double::Builder& value) noexcept
@@ -809,6 +809,25 @@ bool operator==(const MultiValue_BASE<LHS_BOXED, FIELDS_MASK>& lhs, const MultiV
             return false;
 
     return true;
+}
+
+template <bool BOXED>
+size_t consume(const MultiValue_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    if (value.get_counter()) result += consume(*value.get_counter());
+    if (value.get_counter_eq_1()) result += consume(*value.get_counter_eq_1());
+    if (value.get_value_set()) result += consume(*value.get_value_set());
+    if (value.get_value_min()) result += consume(*value.get_value_min());
+    if (value.get_value_max()) result += consume(*value.get_value_max());
+    if (value.get_value_sum()) result += consume(*value.get_value_sum());
+    if (value.get_value_sum_square()) result += consume(*value.get_value_sum_square());
+    if (value.get_uniques()) result += consume(*value.get_uniques());
+    if (value.get_centroids()) result += consume(*value.get_centroids());
+    if (value.get_max_host_tag()) result += consume(*value.get_max_host_tag());
+    if (value.get_min_host_tag()) result += consume(*value.get_min_host_tag());
+    if (value.get_max_counter_host_tag()) result += consume(*value.get_max_counter_host_tag());
+    return result;
 }
 
 }    // namespace opus::inl::statshouse

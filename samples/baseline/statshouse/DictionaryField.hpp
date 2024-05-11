@@ -137,4 +137,13 @@ bool operator==(const DictionaryField_BASE<LHS_BOXED, T>& lhs, const DictionaryF
            && lhs.get_value() == rhs.get_value();
 }
 
+template <bool BOXED, TLType T>
+size_t consume(const DictionaryField_BASE<BOXED, T>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_key());
+    result += consume(value.get_value());
+    return result;
+}
+
 }    // namespace baseline::statshouse

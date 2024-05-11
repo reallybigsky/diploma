@@ -92,16 +92,16 @@ public:
                    && lhs.b_ingestion_status_ok2 == rhs.get_ingestion_status_ok2();
         }
 
-        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7, size_t SIZE_8, size_t SIZE_9, size_t SIZE_10>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3, size_t SIZE_4, size_t SIZE_5, size_t SIZE_6, size_t SIZE_7, size_t SIZE_8, size_t SIZE_9, size_t SIZE_10, size_t SIZE_11>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
-                    .set_metrics(array<multiItem>::Builder::random<SIZE_1, SIZE_2, SIZE_3, SIZE_4, SIZE_5, SIZE_6, SIZE_7>(engine))
-                    .set_sample_factors(array<sampleFactor>::Builder::random<SIZE_8>(engine))
-                    .set_ingestion_status_ok(array<sampleFactor>::Builder::random<SIZE_9>(engine))
+                    .set_metrics(array<multiItem>::Builder::random<SIZE_1, SIZE_2, SIZE_3, SIZE_4, SIZE_5, SIZE_6, SIZE_7, SIZE_8>(engine))
+                    .set_sample_factors(array<sampleFactor>::Builder::random<SIZE_9>(engine))
+                    .set_ingestion_status_ok(array<sampleFactor>::Builder::random<SIZE_10>(engine))
                     .set_missed_seconds(Nat::Builder::random(engine))
                     .set_legacy_agent_env(Int::Builder::random(engine))
-                    .set_ingestion_status_ok2(array<ingestionStatus2>::Builder::random<SIZE_10>(engine));
+                    .set_ingestion_status_ok2(array<ingestionStatus2>::Builder::random<SIZE_11>(engine));
         }
 
         Builder& set_metrics(const array<multiItem>::Builder& value) noexcept
@@ -191,6 +191,18 @@ bool operator==(const SourceBucket2& lhs, const SourceBucket2& rhs) noexcept
            && lhs.get_missed_seconds() == rhs.get_missed_seconds()
            && lhs.get_legacy_agent_env() == rhs.get_legacy_agent_env()
            && lhs.get_ingestion_status_ok2() == rhs.get_ingestion_status_ok2();
+}
+
+size_t consume(const SourceBucket2& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_metrics());
+    result += consume(value.get_sample_factors());
+    result += consume(value.get_ingestion_status_ok());
+    result += consume(value.get_missed_seconds());
+    result += consume(value.get_legacy_agent_env());
+    result += consume(value.get_ingestion_status_ok2());
+    return result;
 }
 
 }    // namespace baseline::statshouse

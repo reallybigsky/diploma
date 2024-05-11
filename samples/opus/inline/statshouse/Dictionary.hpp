@@ -104,4 +104,12 @@ bool operator==(const Dictionary_BASE<LHS_BOXED, T>& lhs, const Dictionary_BASE<
     return lhs.get_array1() == rhs.get_array1();
 }
 
-}    // namespace baseline::statshouse
+template <bool BOXED, TLType T>
+size_t consume(const Dictionary_BASE<BOXED, T>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_array1());
+    return result;
+}
+
+}    // namespace opus::inl::statshouse

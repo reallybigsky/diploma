@@ -159,4 +159,14 @@ bool operator==(const HttpQuery& lhs, const HttpQuery& rhs) noexcept
            && lhs.get_headers() == rhs.get_headers();
 }
 
+size_t consume(const HttpQuery& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    if (value.get_uri()) result += consume(*value.get_uri());
+    if (value.get_args()) result += consume(*value.get_args());
+    if (value.get_headers()) result += consume(*value.get_headers());
+    return result;
+}
+
 }    // namespace opus::proxy::statshouse

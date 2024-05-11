@@ -10,8 +10,8 @@
 class DataStream {
 public:
     struct Block {
-        std::shared_ptr<uint8_t[]> sptr;
-        size_t size;
+        std::shared_ptr<uint8_t[]> sptr = {};
+        size_t size = 0;
 
         uint8_t* data() const
         {
@@ -85,6 +85,13 @@ public:
 
 
 
+    bool empty() const noexcept
+    {
+        return m_block == m_queue.cend();
+    }
+
+
+
     void add(const Block& block) noexcept
     {
         m_remaining_bytes += block.size;
@@ -110,6 +117,19 @@ public:
 
         m_queue.insert(m_queue.end(), begin, end);
         m_block = m_queue.cbegin();
+    }
+
+
+
+    std::pair<Block, size_t> pop() noexcept
+    {
+        Block block = m_queue.front();
+        size_t pos = m_pos;
+        ++m_block;
+        m_queue.pop_front();
+        m_pos = 0;
+        m_remaining_bytes = m_remaining_bytes - block.size;
+        return {block, pos};
     }
 
 protected:

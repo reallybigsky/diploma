@@ -27,6 +27,16 @@ static_assert(simple::Rectangle_s<7>::SIZEOF == 52);
 template <typename T>
 class RectangleFixture : public testing::Test {
 public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+
     static constexpr size_t MASK_MIN = 0;
     static constexpr size_t MASK_MAX = 8;
 };
@@ -37,7 +47,18 @@ TYPED_TEST_SUITE(RectangleFixture, RectangleMagic);
 
 
 template <typename T>
-class RectangleStaticMaskFixture : public testing::Test {};
+class RectangleStaticMaskFixture : public testing::Test {
+public:
+    void SetUp() override
+    {
+        Allocator::startScope();
+    }
+
+    void TearDown() override
+    {
+        Allocator::endScope();
+    }
+};
 
 using RectangleStaticMask = ::testing::Types<std::integral_constant<uint32_t, 0>,
                                              std::integral_constant<uint32_t, 1>,

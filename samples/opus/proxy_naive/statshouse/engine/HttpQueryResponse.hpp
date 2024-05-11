@@ -196,4 +196,15 @@ bool operator==(const HttpQueryResponse& lhs, const HttpQueryResponse& rhs) noex
            && lhs.get_additional_headers() == rhs.get_additional_headers();
 }
 
+size_t consume(const HttpQueryResponse& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    if (value.get_return_code()) result += consume(*value.get_return_code());
+    if (value.get_data()) result += consume(*value.get_data());
+    if (value.get_content_type()) result += consume(*value.get_content_type());
+    if (value.get_additional_headers()) result += consume(*value.get_additional_headers());
+    return result;
+}
+
 }    // namespace opus::proxy_naive::statshouse

@@ -36,9 +36,9 @@ public:
 
     bool verify() const noexcept
     {
-         if constexpr (BOXED)
-             if (m_magic::value != MAGIC)
-                 return false;
+        if constexpr (BOXED)
+            if (m_magic::value != MAGIC)
+                return false;
 
         if (!get_value().verify())
             return false;
@@ -148,6 +148,15 @@ bool operator==(const Centroid_BASE<LHS_BOXED>& lhs, const Centroid_BASE<RHS_BOX
 {
     return lhs.get_value() == rhs.get_value()
            && lhs.get_weight() == rhs.get_weight();
+}
+
+template <bool BOXED>
+size_t consume(const Centroid_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_value());
+    result += consume(value.get_weight());
+    return result;
 }
 
 }    // namespace opus::inl::statshouse

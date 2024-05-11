@@ -84,13 +84,13 @@ public:
                    && lhs.b_values == rhs.get_values();
         }
 
-        template <size_t SIZE_1, size_t SIZE_2>
+        template <size_t SIZE_1, size_t SIZE_2, size_t SIZE_3>
         static Builder random(std::default_random_engine& engine) noexcept
         {
             return Builder {}
                     .set_fields_mask(Nat::Builder::random(engine))
                     .set_key(string::Builder::random<SIZE_1>(engine))
-                    .set_values(array<tagValue>::Builder::random<SIZE_2>(engine));
+                    .set_values(array<tagValue>::Builder::random<SIZE_2, SIZE_3>(engine));
         }
 
         Builder& set_fields_mask(const Nat::Builder& value) noexcept
@@ -153,6 +153,16 @@ bool operator==(const Filter_BASE<LHS_BOXED>& lhs, const Filter_BASE<RHS_BOXED>&
     return lhs.get_fields_mask() == rhs.get_fields_mask()
            && lhs.get_key() == rhs.get_key()
            && lhs.get_values() == rhs.get_values();
+}
+
+template <bool BOXED>
+size_t consume(const Filter_BASE<BOXED>& value) noexcept
+{
+    size_t result = 0;
+    result += consume(value.get_fields_mask());
+    result += consume(value.get_key());
+    result += consume(value.get_values());
+    return result;
 }
 
 }    // namespace opus::proxy_naive::statshouse
