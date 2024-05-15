@@ -15,11 +15,11 @@ add_subdirectory(lib/fuzztest)
 
 
 ##gen target
-#add_executable(gen
-#        gen/main.cpp
-#)
-#target_compile_options(gen PRIVATE -Wall -Wextra -std=c++23)
-#target_include_directories(gen PRIVATE ${PROJECT_SOURCE_DIR})
+add_executable(gen
+        gen/main.cpp
+)
+target_compile_options(gen PRIVATE -Wall -Wextra -std=c++23)
+target_include_directories(gen PRIVATE ${PROJECT_SOURCE_DIR})
 
 #bench_output target
 add_executable(bench_output

@@ -5,8 +5,8 @@
 
 //#define BASELINE
 //#define INLINE
-//#define PROXY_NAIVE
-#define PROXY
+#define PROXY_NAIVE
+//#define PROXY
 
 constexpr size_t SEED = 777;
 std::default_random_engine DEFAULT_RANDOM_ENGINE(SEED); // NOLINT

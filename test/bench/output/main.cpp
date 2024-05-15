@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     const size_t file_size = std::atoll(argv[3]) * 1024 * 1024;
 
     std::unordered_map<std::string, size_t> COUNTERS;
-    const size_t BUFFER_SIZE = 100 * 1024 * 1024;
+    const size_t BUFFER_SIZE = 256 * 1024 * 1024;
 
     std::default_random_engine engine(seed);
     std::uniform_int_distribution<size_t> ud(0, 9);

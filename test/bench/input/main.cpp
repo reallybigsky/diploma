@@ -1,30 +1,109 @@
 #include "test/Environment.hpp"
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <sys/stat.h>
 
-#define FLUSH_CACHE
 
-constexpr size_t MAX_MEMORY_SIZE = 50 * 1024 * 1024;
+
+constexpr size_t MAX_MEMORY_SIZE = 32 * 1024 * 1024;
+constexpr size_t WARMUP_ITERATIONS = 5;
+constexpr size_t WARMUP_BLOCK_SIZE = 1024 * 1024;
+constexpr size_t BENCH_ITERATIONS = 10;
 constexpr size_t CONSUME_ITERATIONS = 1;
-constexpr size_t CPU_CACHE_SIZE = 12 * 1024 * 1024;
+const std::vector<size_t> BLOCK_SIZES = {
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768,
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608,
+        16777216
+};
 
-size_t flush_cache()
+
+
+void RunBenchmarkIter(const std::filesystem::path& input_file_path,
+                      const std::filesystem::path& output_dir_path,
+                      size_t block_size,
+                      bool is_warmup)
 {
+    std::ifstream input_file(input_file_path, std::ios::binary | std::ios::in);
+
+    size_t input_file_size = std::filesystem::file_size(input_file_path);
+    size_t curr_file_pos = 0;
+
+    InputStream is;
+    std::list<DataStream::Block> storage;
+
+    stats::total_allocations = 0;
+    stats::total_bytes_allocated = 0;
+
     size_t result = 0;
-    uint8_t* ptr = new uint8_t[CPU_CACHE_SIZE];
-    for (size_t i = 0; i < CPU_CACHE_SIZE; ++i) {
-        ptr[i] = rand();
+    size_t total_microseconds = 0;
+    size_t fetch_microseconds = 0;
+    size_t consume_microseconds = 0;
+    while (curr_file_pos < input_file_size || is.remainingBytes() > 0) {
+        while (is.remainingBytes() < MAX_MEMORY_SIZE && curr_file_pos < input_file_size) {
+            const size_t curr_block_size = std::min(input_file_size - curr_file_pos, block_size);
+            DataStream::Block block(std::shared_ptr<uint8_t[]>(new uint8_t[curr_block_size]), curr_block_size);
+            input_file.read((char*)block.data(), curr_block_size);
+            is.add(block);
+            storage.push_back(block);
+            curr_file_pos += curr_block_size;
+        }
+
+        std::chrono::high_resolution_clock::time_point fetch_start = std::chrono::high_resolution_clock::now();
+        Allocator::startScope();
+        {
+            statshouse::HighLevelType data = statshouse::HighLevelType::fetch(is);
+            fetch_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - fetch_start).count();
+
+            std::visit([&](auto&& arg) {
+                for (size_t i = 0; i < CONSUME_ITERATIONS; ++i) {
+                    std::chrono::high_resolution_clock::time_point consume_start = std::chrono::high_resolution_clock::now();
+                    result += consume(arg);
+                    consume_microseconds += std::chrono::duration_cast<std::chrono::microseconds>( std::chrono::high_resolution_clock::now() - consume_start).count();
+                }
+            },
+                       data.get());
+        }
+        Allocator::endScope();
+        total_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - fetch_start).count();
+
+        while (!storage.empty() && storage.front().sptr.use_count() == 1) {
+            storage.pop_front();
+        }
+        //        std::cout << std::setprecision(3) << (double)curr_file_pos / double(file_size) * 100 << '%' << std::endl;
     }
 
-    for (size_t i = 0; i < CPU_CACHE_SIZE; ++i) {
-        result += ptr[i];
-    }
+    if (!is_warmup) {
+        std::ofstream output_file(output_dir_path / (std::to_string(block_size) + ".txt"), std::ios::app | std::ios::out);
+        output_file << total_microseconds << ' '
+                    << fetch_microseconds << ' '
+                    << consume_microseconds << ' '
+                    << stats::total_allocations << ' '
+                    << stats::total_bytes_allocated << ' ' << std::endl;
 
-    delete[] ptr;
-    return result;
+        std::cout << "CONSUME_RESULT: " << result << std::endl;
+        std::cout << std::endl;
+        std::cout << "TOTAL_TIME_MICROSECONDS: " << total_microseconds << std::endl;
+        std::cout << "FETCH_TIME_MICROSECONDS: " << fetch_microseconds << std::endl;
+        std::cout << "CONSUME_TIME_MICROSECONDS: " << consume_microseconds << std::endl;
+        std::cout << std::endl;
+        std::cout << "TOTAL_ALLOCATIONS: " << stats::total_allocations << std::endl;
+        std::cout << "TOTAL_BYTES_ALLOCATED: " << stats::total_bytes_allocated << std::endl;
+    }
 }
 
 
@@ -36,79 +115,22 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    FILE* file = fopen(argv[1], "rb");
-    const size_t BLOCK_SIZE = std::atoll(argv[2]);
+    std::filesystem::path input_file_path(argv[1]);
+    std::filesystem::path output_dir_path(argv[2]);
 
-    struct stat stat_buf;
-    int rc = fstat(fileno(file), &stat_buf);
-    if (rc)
-        return 1;
+    std::cout << "WARMUP START" << std::endl;
+    for (size_t i = 0; i < WARMUP_ITERATIONS; ++i) {
+        RunBenchmarkIter(input_file_path, output_dir_path, WARMUP_BLOCK_SIZE, true);
+    }
+    std::cout << "WARMUP END" << std::endl;
 
-    const size_t file_size = stat_buf.st_size;
-    size_t curr_file_pos = 0;
-
-    InputStream is;
-    std::list<DataStream::Block> storage;
-
-    size_t cache_rand = 0;
-    size_t result = 0;
-    size_t total_microseconds = 0;
-    size_t fetch_microseconds = 0;
-    size_t consume_microseconds = 0;
-    while (curr_file_pos < file_size || is.remainingBytes() > 0) {
-        Allocator::startScope();
-        while (is.remainingBytes() < MAX_MEMORY_SIZE && curr_file_pos < file_size) {
-            const size_t curr_block_size = std::min(file_size - curr_file_pos, BLOCK_SIZE);
-            DataStream::Block block(std::shared_ptr<uint8_t[]>(new uint8_t[curr_block_size]), curr_block_size);
-            size_t bytes_read = fread(block.data(), sizeof(uint8_t), curr_block_size, file);
-            is.add(block);
-            storage.push_back(block);
-            curr_file_pos += bytes_read;
+    for (size_t block_size : BLOCK_SIZES) {
+        for (size_t i = 0; i < BENCH_ITERATIONS; ++i) {
+            std::cout << std::endl
+                      << block_size << ' ' << i + 1 << '/' << BENCH_ITERATIONS << std::endl;
+            RunBenchmarkIter(input_file_path, output_dir_path, block_size, false);
         }
-
-        {
-            std::chrono::high_resolution_clock::time_point fetch_start = std::chrono::high_resolution_clock::now();
-            statshouse::HighLevelType data = statshouse::HighLevelType::fetch(is);
-            std::chrono::high_resolution_clock::time_point fetch_end = std::chrono::high_resolution_clock::now();
-
-            total_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(fetch_end - fetch_start).count();
-            fetch_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(fetch_end - fetch_start).count();
-
-            std::visit([&](auto&& arg) {
-                for (size_t i = 0; i < CONSUME_ITERATIONS; ++i) {
-                    //#ifdef FLUSH_CACHE
-                    //                cache_rand += flush_cache();
-                    //#endif
-                    std::chrono::high_resolution_clock::time_point consume_start = std::chrono::high_resolution_clock::now();
-                    result += consume(arg);
-                    std::chrono::high_resolution_clock::time_point consume_end = std::chrono::high_resolution_clock::now();
-
-                    total_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(consume_end - consume_start).count();
-                    consume_microseconds += std::chrono::duration_cast<std::chrono::microseconds>(consume_end - consume_start).count();
-                }
-            },
-                       data.get());
-        }
-
-        while (!storage.empty() && storage.front().sptr.use_count() == 1) {
-            storage.pop_front();
-        }
-
-        std::cout << std::setprecision(3) << (double)curr_file_pos / double(file_size) * 100 << '%' << std::endl;
-//        std::cout << result << std::endl;
-        Allocator::endScope();
     }
 
-    std::cout << "CACHE_RAND: " << cache_rand << std::endl;
-    std::cout << "CONSUME_RESULT: " << result << std::endl;
-    std::cout << std::endl;
-    std::cout << "TOTAL_TIME_MICROSECONDS: " << total_microseconds << std::endl;
-    std::cout << "FETCH_TIME_MICROSECONDS: " << fetch_microseconds << std::endl;
-    std::cout << "CONSUME_TIME_MICROSECONDS: " << consume_microseconds << std::endl;
-    std::cout << std::endl;
-    std::cout << "TOTAL_ALLOCATIONS: " << stats::total_allocations << std::endl;
-    std::cout << "TOTAL_BYTES_ALLOCATED: " << stats::total_bytes_allocated << std::endl;
-
-    fclose(file);
     return 0;
 }

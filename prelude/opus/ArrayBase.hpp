@@ -45,8 +45,8 @@ public:
 
     symbol_t operator[](size_t idx) const noexcept
     {
-        uintptr_t* table = m_proxy.table();
-        uintptr_t* currEntry = m_proxy.table();
+        const uintptr_t* table = m_proxy.table();
+        const uintptr_t* currEntry = m_proxy.table();
         for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
@@ -156,11 +156,11 @@ public:
 
     class Iterator {
     public:
-        using iterator_category = std::input_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = symbol_t;
-        using pointer = const value_type*;
-        using reference = const value_type&;
+        using pointer = const value_type* const;
+        using reference = value_type;
 
         Iterator(const ArrayBase<BOXED, symbol_t>& arr) noexcept
             : i_arr(arr)
@@ -186,14 +186,14 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
-                *this = Iterator();
-                return *this;
-            }
-
             if (++i_inner_pos == i_entry[0]) [[unlikely]] {
-                i_inner_pos = 0;
-                i_entry += 2;
+                if (i_outer_pos + i_inner_pos == i_arr.m_size) [[unlikely]] {
+                    *this = Iterator();
+                } else {
+                    i_outer_pos += i_inner_pos;
+                    i_inner_pos = 0;
+                    i_entry += 2;
+                }
             }
 
             return *this;
@@ -212,7 +212,7 @@ public:
         ArrayBase<BOXED, symbol_t> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
-        uintptr_t* i_entry = nullptr;
+        const uintptr_t* i_entry = nullptr;
     };
 
 private:
@@ -253,8 +253,8 @@ public:
 
     T operator[](size_t idx) const noexcept
     {
-        uintptr_t* table = m_proxy.table();
-        uintptr_t* currEntry = m_proxy.table();
+        const uintptr_t* table = m_proxy.table();
+        const uintptr_t* currEntry = m_proxy.table();
         for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
@@ -389,11 +389,11 @@ public:
 
     class Iterator {
     public:
-        using iterator_category = std::input_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = T;
         using pointer = const value_type*;
-        using reference = const value_type&;
+        using reference = value_type;
 
         Iterator(const ArrayBase<BOXED, Scalar<T>>& arr) noexcept
             : i_arr(arr)
@@ -425,14 +425,14 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
-                *this = Iterator();
-                return *this;
-            }
-
             if (++i_inner_pos == i_entry[0]) [[unlikely]] {
-                i_inner_pos = 0;
-                i_entry += 2;
+                if (i_outer_pos + i_inner_pos == i_arr.m_size) [[unlikely]] {
+                    *this = Iterator();
+                } else {
+                    i_outer_pos += i_inner_pos;
+                    i_inner_pos = 0;
+                    i_entry += 2;
+                }
             }
 
             return *this;
@@ -451,7 +451,7 @@ public:
         ArrayBase<BOXED, Scalar<T>> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
-        uintptr_t* i_entry = nullptr;
+        const uintptr_t* i_entry = nullptr;
     };
 
 private:
@@ -486,7 +486,7 @@ public:
     bool verify() const noexcept
     {
         for (size_t i = 0; i < m_size; ++i) {
-            if (!(*this)[i].verify())
+            if (!(*this)[i].verify()) [[unlikely]]
                 return false;
         }
 
@@ -504,8 +504,8 @@ public:
 
     T operator[](size_t idx) const noexcept
     {
-        uintptr_t* table = m_proxy.table();
-        uintptr_t* currEntry = m_proxy.table();
+        const uintptr_t* table = m_proxy.table();
+        const uintptr_t* currEntry = m_proxy.table();
         for (size_t i = 0; idx >= table[i]; i += 2) [[unlikely]] {
             idx -= table[i];
             currEntry += 2;
@@ -516,8 +516,7 @@ public:
             return t;
         }
 
-        Proxy proxy(nullptr, (uint8_t*)currEntry[1] + T::SIZEOF * idx);
-        return T {proxy, 0};
+        return T {Proxy {nullptr, (uint8_t*)currEntry[1] + T::SIZEOF * idx}, 0};
     }
 
 
@@ -633,7 +632,7 @@ public:
 
     class Iterator {
     public:
-        using iterator_category = std::input_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = T;
         using pointer = Iterator&;
@@ -656,8 +655,7 @@ public:
             if (i_entry[0] == 1 && IS_SHARED(i_entry[1])) [[unlikely]]
                 return *(T*)GET_PTR(i_entry[1]);
 
-            Proxy proxy(nullptr, (uint8_t*)i_entry[1] + T::SIZEOF * i_inner_pos);
-            return T {proxy, 0};
+            return T {Proxy {nullptr, (uint8_t*)i_entry[1] + T::SIZEOF * i_inner_pos}, 0};
         }
 
         pointer operator->() const noexcept
@@ -672,14 +670,14 @@ public:
 
         Iterator& operator++() noexcept
         {
-            if (++i_outer_pos == i_arr.size()) [[unlikely]] {
-                *this = Iterator();
-                return *this;
-            }
-
             if (++i_inner_pos == i_entry[0]) [[unlikely]] {
-                i_inner_pos = 0;
-                i_entry += 2;
+                if (i_outer_pos + i_inner_pos == i_arr.m_size) [[unlikely]] {
+                    *this = Iterator();
+                } else {
+                    i_outer_pos += i_inner_pos;
+                    i_inner_pos = 0;
+                    i_entry += 2;
+                }
             }
 
             return *this;
@@ -698,7 +696,7 @@ public:
         ArrayBase<BOXED, T> i_arr;
         size_t i_outer_pos = 0;
         size_t i_inner_pos = 0;
-        uintptr_t* i_entry = nullptr;
+        const uintptr_t* i_entry = nullptr;
     };
 
 private:
@@ -885,7 +883,7 @@ public:
 
     class Iterator {
     public:
-        using iterator_category = std::input_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = T;
         using pointer = const value_type*;
@@ -915,7 +913,6 @@ public:
         {
             if (++i_pos == i_arr.size()) [[unlikely]] {
                 *this = Iterator();
-                return *this;
             }
 
             return *this;
@@ -1007,7 +1004,7 @@ template <bool BOXED>
 size_t consume(const ArrayBase<BOXED, symbol_t>& value) noexcept
 {
     size_t result = 0;
-    for (const auto& it : value) {
+    for (auto it : value) {
         result += it;
     }
     return result;
@@ -1035,9 +1032,6 @@ size_t consume(const ArrayBase<BOXED, T>& value) noexcept
     for (const auto& it : value) {
         result += consume(it);
     }
-//    for (size_t i = 0; i < value.size(); ++i) {
-//        result += consume(value[i]);
-//    }
     return result;
 }
 

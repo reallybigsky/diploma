@@ -9,6 +9,11 @@
 #define IS_SET(mask, pos) (!!((mask) & (1 << (pos))))
 
 
+namespace stats {
+size_t total_allocations = 0;
+size_t total_bytes_allocated = 0;
+}    // namespace stats
+
 
 using magic_t = uint32_t;
 using offset_t = uint32_t;

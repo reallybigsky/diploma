@@ -138,7 +138,7 @@ public:
 private:
     void clear() noexcept
     {
-        if (m_ref_cnt && --(*m_ref_cnt) == 0) {
+        if (m_ref_cnt && --(*m_ref_cnt) == 0) [[unlikely]] {
             Allocator::deallocate(m_ref_cnt);
         }
 
@@ -160,7 +160,7 @@ private:
     struct Table {
     public:
         ref_cnt_t p_ref_cnt;
-        size_t p_size;
+        uint32_t p_size;
         uintptr_t p_data[];
 
     public:
@@ -171,7 +171,7 @@ private:
         Table& operator=(const Table&) = delete;
         Table& operator=(Table&&) = delete;
 
-        static Table<U>* create(size_t size) noexcept
+        static Table<U>* create(uint32_t size) noexcept
         requires(StaticType<U>)
         {
             Table<U>* proxy = static_cast<Table<U>*>(Allocator::allocate(sizeof(Table<U>) + 2 * sizeof(uintptr_t) * size));
@@ -180,7 +180,7 @@ private:
             return proxy;
         }
 
-        static Table<U>* create(size_t size) noexcept
+        static Table<U>* create(uint32_t size) noexcept
         requires(DynamicType<U>)
         {
             Table<U>* proxy = static_cast<Table<U>*>(Allocator::allocate(sizeof(Table<U>) + sizeof(U) * size));
@@ -197,7 +197,7 @@ private:
         requires(Struct<U>)
         {
             for (size_t i = 0; i < 2 * p_size; i += 2) {
-                if (p_data[i] == 1 && IS_SHARED(p_data[i + 1])) {
+                if (p_data[i] == 1 && IS_SHARED(p_data[i + 1])) [[unlikely]] {
                     U* u = (U*)GET_PTR(p_data[i + 1]);
                     std::destroy_at(u);
                     Allocator::deallocate(u);
@@ -295,29 +295,30 @@ public:
 
     size_t size() const noexcept
     {
-        return m_data ? m_data->p_size : 0;
+        if (!m_data) [[unlikely]]
+            return 0;
+
+        return m_data->p_size;
     }
 
 
 
-    uint8_t* data() const noexcept
+    const uint8_t* data() const noexcept
     {
         if (!m_data) [[unlikely]]
             return nullptr;
 
-        return (uint8_t*)m_data->p_data;
-//        return m_data ? (uint8_t*)m_data->p_data : nullptr;
+        return (const uint8_t*)m_data->p_data;
     }
 
 
 
-    uintptr_t* table() const noexcept
+    const uintptr_t* table() const noexcept
     {
         if (!m_data) [[unlikely]]
             return nullptr;
 
         return m_data->p_data;
-//        return m_data ? m_data->p_data : nullptr;
     }
 
 private:

@@ -546,7 +546,7 @@ template <bool BOXED>
 size_t consume(const ArrayBase<BOXED, symbol_t>& value) noexcept
 {
     size_t result = 0;
-    for (const auto& it : value) {
+    for (auto it : value) {
         result += it;
     }
     return result;

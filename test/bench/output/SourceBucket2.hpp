@@ -8,17 +8,28 @@
 // 10 999 820
 statshouse::SourceBucket2::Builder createSourceBucket2(std::default_random_engine& engine) noexcept
 {
-    static constexpr size_t MAX_METRICS_ARRAY_SIZE = 32;
-    static constexpr size_t MAX_METRICS_ELEMENT_KEYS_ARRAY_SIZE = 1024;
-    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_UNIQUES_SIZE = 1024;
-    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_CENTROIDS_ARRAY_SIZE = 1024;
-    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ARRAY_SIZE = 32;
-    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_KEY_SIZE = 1024;
-    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_UNIQUES_SIZE = 1024;
-    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_CENTROIDS_ARRAY_SIZE = 1024;
-    static constexpr size_t MAX_SAMPLE_FACTORS_ARRAY_SIZE = 1024;
-    static constexpr size_t MAX_INGESTION_STATUS_OK_ARRAY_SIZE = 1024;
-    static constexpr size_t MAX_INGESTION_STATUS_OK2_ARRAY_SIZE = 1024;
+//    static constexpr size_t MAX_METRICS_ARRAY_SIZE = 128;
+//    static constexpr size_t MAX_METRICS_ELEMENT_KEYS_ARRAY_SIZE = 256;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_UNIQUES_SIZE = 256;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_CENTROIDS_ARRAY_SIZE = 256;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ARRAY_SIZE = 128;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_KEY_SIZE = 1024;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_UNIQUES_SIZE = 256;
+//    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_CENTROIDS_ARRAY_SIZE = 256;
+//    static constexpr size_t MAX_SAMPLE_FACTORS_ARRAY_SIZE = 256;
+//    static constexpr size_t MAX_INGESTION_STATUS_OK_ARRAY_SIZE = 256;
+//    static constexpr size_t MAX_INGESTION_STATUS_OK2_ARRAY_SIZE = 256;
+    static constexpr size_t MAX_METRICS_ARRAY_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_KEYS_ARRAY_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_UNIQUES_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_TAIL_CENTROIDS_ARRAY_SIZE = 256;
+    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ARRAY_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_KEY_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_UNIQUES_SIZE = 128;
+    static constexpr size_t MAX_METRICS_ELEMENT_TOP_ELEMENT_VALUE_CENTROIDS_ARRAY_SIZE = 256;
+    static constexpr size_t MAX_SAMPLE_FACTORS_ARRAY_SIZE = 256;
+    static constexpr size_t MAX_INGESTION_STATUS_OK_ARRAY_SIZE = 256;
+    static constexpr size_t MAX_INGESTION_STATUS_OK2_ARRAY_SIZE = 256;
     return statshouse::SourceBucket2::Builder::random<MAX_METRICS_ARRAY_SIZE,
                                                       MAX_METRICS_ELEMENT_KEYS_ARRAY_SIZE,
                                                       MAX_METRICS_ELEMENT_TAIL_UNIQUES_SIZE,
